@@ -18,9 +18,10 @@ export function useInvoiceForm() {
   const [customerSearch, setCustomerSearch]         = useState("");
   const [selectedCustomer, setSelectedCustomer]     = useState(null);
   const [billedAs, setBilledAs]                     = useState("guest");
-  const [paymentMethod, setPaymentMethod]           = useState("");
-  const [cashReceived, setCashReceived]             = useState("");
-  const [paymentReference, setPaymentReference]     = useState("");
+  const [companyGuest, setCompanyGuest]             = useState(null);
+  const [companyGuestSearch, setCompanyGuestSearch] = useState("");
+  // Pago mixto: array de { method, amount, reference }
+  const [payments, setPayments]                     = useState([{ method: "", amount: "", reference: "" }]);
   const [isExonerada, setIsExonerada]               = useState(false);
   const [globalExemptionOrder, setGlobalExemptionOrder] = useState("");
   const [manualDesc, setManualDesc]                 = useState("");
@@ -57,6 +58,13 @@ export function useInvoiceForm() {
     enabled: !selectedCustomer && customerSearch.length >= 2,
   });
   const companyResults = companySearchData?.data ?? companySearchData ?? [];
+
+  const { data: companyGuestSearchData } = useQuery({
+    queryKey: ["guests-search-company-guest", companyGuestSearch],
+    queryFn: () => getGuestsApi({ search: companyGuestSearch, limit: 5 }),
+    enabled: !!selectedCustomer && (selectedCustomer.type === "company" || (selectedCustomer.type === "guest" && billedAs === "company" && !!selectedCustomer.company)) && !companyGuest && companyGuestSearch.length >= 2,
+  });
+  const companyGuestResults = companyGuestSearchData?.data ?? [];
 
   // ── Catalog filters ───────────────────────────────────────────────────────
 
@@ -167,25 +175,60 @@ export function useInvoiceForm() {
     setManualDesc(""); setManualPrice(""); setManualQty("1"); setManualExemptOrder("");
   };
 
+  // ── Totals ────────────────────────────────────────────────────────────────
+
+  const totals = useMemo(
+    () => calculateInvoiceTotals(items.map((i) => ({ ...i, quantity: String(i.quantity), unitPrice: String(i.unitPrice), isExonerated: isExonerada ? true : i.isExonerated, isvType: isExonerada ? "EXENTO" : i.isvType }))),
+    [items, isExonerada],
+  );
+
+  // ── Payments helpers ──────────────────────────────────────────────────────
+
+  const isCreditPayment = payments.some((p) => p.method === "CREDIT");
+
+  const setPaymentRow = (idx, field, value) =>
+    setPayments((prev) => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+
+  const addPaymentRow = () =>
+    setPayments((prev) => [...prev, { method: "", amount: "", reference: "" }]);
+
+  const removePaymentRow = (idx) =>
+    setPayments((prev) => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
+
+  const clearCreditPayments = () =>
+    setPayments((prev) => prev.map((p) => p.method === "CREDIT" ? { ...p, method: "" } : p));
+
+  const cashChange = useMemo(() => {
+    const cashRows = payments.filter((p) => p.method === "CASH" && p.amount);
+    if (cashRows.length === 0) return null;
+    const cashTotal = cashRows.reduce((s, p) => s + Number(p.amount || 0), 0);
+    return cashTotal - totals.grandTotal;
+  }, [payments, totals.grandTotal]);
+
   // ── Customer ──────────────────────────────────────────────────────────────
 
   const handleSelectGuest = (guest) => {
     setSelectedCustomer({ type: "guest", ...guest });
     setBilledAs(guest.company ? "company" : "guest");
     setCustomerSearch("");
-    if (paymentMethod === "CREDIT" && !guest.company?.hasCredit) setPaymentMethod("");
+    setCompanyGuest(null);
+    setCompanyGuestSearch("");
+    if (isCreditPayment && !guest.company?.hasCredit) clearCreditPayments();
   };
 
   const handleSelectCompany = (company) => {
     setSelectedCustomer({ type: "company", ...company });
     setBilledAs("company");
     setCustomerSearch("");
-    if (paymentMethod === "CREDIT" && !company.hasCredit) setPaymentMethod("");
+    setCompanyGuest(null);
+    setCompanyGuestSearch("");
+    if (isCreditPayment && !company.hasCredit) clearCreditPayments();
   };
 
   const clearCustomer = () => {
     setSelectedCustomer(null); setBilledAs("guest"); setCustomerSearch("");
-    if (paymentMethod === "CREDIT") setPaymentMethod("");
+    setCompanyGuest(null); setCompanyGuestSearch("");
+    if (isCreditPayment) clearCreditPayments();
   };
 
   const resolvedCustomer = useMemo(() => {
@@ -195,30 +238,28 @@ export function useInvoiceForm() {
     return { name: selectedCustomer.fullName, rtn: selectedCustomer.rtn || undefined, companyId: null, hasCredit: false };
   }, [selectedCustomer, billedAs]);
 
-  // ── Totals ────────────────────────────────────────────────────────────────
-
-  const totals = useMemo(
-    () => calculateInvoiceTotals(items.map((i) => ({ ...i, quantity: String(i.quantity), unitPrice: String(i.unitPrice), isExonerated: isExonerada ? true : i.isExonerated, isvType: isExonerada ? "EXENTO" : i.isvType }))),
-    [items, isExonerada],
-  );
-
-  const change = useMemo(() => {
-    if (paymentMethod !== "CASH" || !cashReceived) return null;
-    return Number(cashReceived) - totals.grandTotal;
-  }, [paymentMethod, cashReceived, totals.grandTotal]);
-
   // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e, onSave, onClose) => {
     e.preventDefault();
     setError("");
     if (items.length === 0) return setError("Agrega al menos un ítem");
-    if (!paymentMethod) return setError("Selecciona el método de pago");
-    if (paymentMethod === "CASH" && cashReceived && Number(cashReceived) < totals.grandTotal) return setError("El monto recibido es menor que el total");
+
+    const validPayments = payments.filter((p) => p.method);
+    if (validPayments.length === 0) return setError("Selecciona al menos un método de pago");
+
+    const isMixed = validPayments.length > 1;
+    if (isMixed) {
+      const paidSum = validPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
+      if (Math.abs(paidSum - totals.grandTotal) > 0.01)
+        return setError(`La suma de los pagos (${paidSum.toFixed(2)}) no coincide con el total (${totals.grandTotal.toFixed(2)})`);
+    }
+
     try {
-      const roomItem  = items.find((i) => i.reservationId);
+      const roomItems = items.filter((i) => i.reservationId);
+      const allReservationIds = [...new Set(roomItems.map((i) => i.reservationId))];
       const productItems = items.flatMap((i) => {
-        if (i._reservationChargeId) return []; // stock already handled when charge was added
+        if (i._reservationChargeId) return [];
         if (i._productId) return [{ productId: i._productId, quantity: i.quantity, unitPrice: i._productUnitPrice }];
         if (i._productItems?.length > 0) return i._productItems;
         return [];
@@ -228,15 +269,31 @@ export function useInvoiceForm() {
         if (i._reservationChargeIds) return i._reservationChargeIds;
         return [];
       });
+
+      // Si factura va a empresa → guestId es el huésped referencia (siempre opcional)
+      // Si factura va al huésped directamente → guestId es el huésped (para registros)
+      const guestId = !isReceipt
+        ? (resolvedCustomer.companyId ? companyGuest?.id ?? null : selectedCustomer?.type === "guest" ? selectedCustomer.id : null)
+        : null;
+
+      // Para pago único se envía paymentMethod (compatibilidad backend)
+      // Para mixto se envía payments array con amounts
+      const payloadPayments = isMixed
+        ? validPayments.map((p) => ({ method: p.method, amount: Number(p.amount), reference: p.reference || undefined }))
+        : undefined;
+      const singleMethod = !isMixed ? validPayments[0].method : undefined;
+      const singleRef    = !isMixed && validPayments[0].reference ? validPayments[0].reference : undefined;
+
       await onSave({
         isReceipt,
-        reservationId: roomItem?.reservationId ?? null,
-        guestId: (!isReceipt && selectedCustomer?.type === "guest") ? selectedCustomer.id : null,
+        reservationIds: allReservationIds.length > 0 ? allReservationIds : undefined,
+        guestId,
         companyId: !isReceipt ? resolvedCustomer.companyId : null,
         customerName: !isReceipt ? resolvedCustomer.name : "Consumidor Final",
         customerRtn: !isReceipt ? resolvedCustomer.rtn : undefined,
-        paymentMethod,
-        paymentReference: ["CARD", "TRANSFER"].includes(paymentMethod) && paymentReference ? paymentReference : undefined,
+        paymentMethod: singleMethod,
+        paymentReference: singleRef,
+        payments: payloadPayments,
         productItems: productItems.length > 0 ? productItems : undefined,
         reservationChargeIds: reservationChargeIds.length > 0 ? reservationChargeIds : undefined,
         items: items.map((i) => normalizeInvoiceItem(isExonerada ? { ...i, isExonerated: true, isvType: "EXENTO", exemptionOrderNumber: globalExemptionOrder.trim() || null } : i)),
@@ -258,13 +315,13 @@ export function useInvoiceForm() {
     customerSearch, setCustomerSearch, selectedCustomer, billedAs, setBilledAs,
     resolvedCustomer, guestResults, companyResults,
     handleSelectGuest, handleSelectCompany, clearCustomer,
-    paymentMethod, setPaymentMethod, cashReceived, setCashReceived,
-    paymentReference, setPaymentReference,
+    payments, setPaymentRow, addPaymentRow, removePaymentRow, isCreditPayment, cashChange,
     isExonerada, setIsExonerada, globalExemptionOrder, setGlobalExemptionOrder,
     manualDesc, setManualDesc, manualQty, setManualQty,
     manualPrice, setManualPrice, manualIsvType, setManualIsvType,
     manualExemptOrder, setManualExemptOrder,
-    error, totals, change,
+    companyGuest, setCompanyGuest, companyGuestSearch, setCompanyGuestSearch, companyGuestResults,
+    error, totals,
     filteredMenu, filteredProducts, filteredRooms,
     handleSubmit,
   };

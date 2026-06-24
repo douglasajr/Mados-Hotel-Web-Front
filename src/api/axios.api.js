@@ -15,18 +15,8 @@ api.interceptors.request.use(config => {
     return Promise.reject(error)
 })
 
-// Si el token expira → redirige al login
-// api.interceptors.response.use(
-//   response => response,
-//   error => {
-//     if (error.response?.status === 401) {
-//       useAuthStore.getState().logout()
-//       window.location.href = '/login'
-//     }
-//     return Promise.reject(error)
-//   }
-// )
-
+// Si el token expira (401) → cierra sesión y redirige al login, excepto en el
+// propio login (donde un 401 significa "credenciales inválidas", no sesión vencida).
 api.interceptors.response.use(
     response => response,
     error => {

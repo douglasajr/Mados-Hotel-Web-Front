@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CalendarDays, DollarSign } from 'lucide-react'
 
-const toInputDate = (d) => new Date(d).toISOString().split('T')[0]
+const toInputDate = (d) => new Date(d).toLocaleDateString("en-CA")
 
 const calcNights = (checkIn, checkOut) => {
   if (!checkIn || !checkOut) return 0

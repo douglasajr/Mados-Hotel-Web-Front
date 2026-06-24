@@ -8,6 +8,11 @@ import { getGuestsApi } from "../../api/guests.api";
 import { Search, X, Zap, BedDouble, CheckCircle2 } from "lucide-react";
 
 const todayStr = () => new Date().toLocaleDateString("en-CA");
+const tomorrowStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toLocaleDateString("en-CA");
+};
 
 const ROOM_TYPE_COLORS = {
   SINGLE:  "bg-sky-50 border-sky-200 text-sky-700",
@@ -95,7 +100,7 @@ function RoomPicker({ rooms, value, onChange }) {
 }
 
 export default function WalkInModal({ onClose, onSave, isSaving }) {
-  const [form, setForm] = useState({ roomId: "", checkOut: "", notes: "" });
+  const [form, setForm] = useState({ roomId: "", checkOut: tomorrowStr(), notes: "" });
   const [guestSearch, setGuestSearch] = useState("");
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [error, setError] = useState("");

@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { BedDouble, UtensilsCrossed, Package, Pencil, Search, Plus, ArrowLeft } from "lucide-react";
 import { useInvoiceForm } from "../../components/invoices/useInvoiceForm";
 import { useInvoices } from "../../hooks/useInvoices";
@@ -6,6 +8,10 @@ import InvoiceRoomTab from "../../components/invoices/InvoiceRoomTab";
 import InvoiceManualTab from "../../components/invoices/InvoiceManualTab";
 import InvoiceCartItems from "../../components/invoices/InvoiceCartItems";
 import InvoiceBottomPanel from "../../components/invoices/InvoiceBottomPanel";
+import SplitInvoiceModal from "../../components/invoices/SplitInvoiceModal";
+import { buildPrintHtml } from "../../components/invoices/invoicePrint.template";
+import { buildProformaInvoice } from "../../components/invoices/invoicePrint.utils";
+import { getActiveFiscalConfigApi } from "../../api/fiscalConfig.api";
 import { formatLPS } from "../../utils/invoices.constants";
 
 const CATALOG_TABS = [
@@ -19,11 +25,85 @@ export default function NewInvoicePage() {
   const navigate = useNavigate();
   const form = useInvoiceForm();
   const { createInvoice, isCreating } = useInvoices({});
+  const [showSplitModal, setShowSplitModal] = useState(false);
+
+  // Config fiscal del hotel (para el encabezado de la proforma). Solo lectura.
+  const { data: fiscalConfig } = useQuery({
+    queryKey: ["active-fiscal-config"],
+    queryFn: getActiveFiscalConfigApi,
+  });
 
   const handleClose = () => navigate("/invoices");
 
+  // Proforma: documento informativo SIN valor fiscal. No llama al backend, no
+  // consume correlativo, no afecta inventario ni crédito. Solo se imprime.
+  const handleProforma = () => {
+    if (form.items.length === 0) return;
+    const proforma = buildProformaInvoice({
+      items: form.items,
+      totals: form.totals,
+      resolvedCustomer: form.resolvedCustomer,
+      selectedCustomer: form.selectedCustomer,
+      payments: form.payments,
+      isExonerada: form.isExonerada,
+      globalExemptionOrder: form.globalExemptionOrder,
+      fiscalConfig,
+    });
+    const w = window.open("", "_blank", "width=850,height=900");
+    if (!w) return;
+    w.document.write(buildPrintHtml(proforma, "PROFORMA"));
+    w.document.close();
+  };
+
   const handleSave = async (payload) => {
     await createInvoice(payload);
+    navigate("/invoices");
+  };
+
+  const handleSplitSave = async (splits) => {
+    const baseItems = form.items;
+    const grandTotal = form.totals.grandTotal;
+    const roomItems = baseItems.filter((i) => i.reservationId);
+    const allReservationIds = [...new Set(roomItems.map((i) => i.reservationId))];
+
+    for (let i = 0; i < splits.length; i++) {
+      const split = splits[i];
+      const fraction = Number(split.amount) / grandTotal;
+
+      const splitItems = baseItems.map((item) => {
+        const fractionalPrice = +(item.quantity * item.unitPrice * fraction).toFixed(2);
+        const isvType = form.isExonerada ? "EXENTO" : item.isvType;
+        const isExonerated = form.isExonerada || item.isExonerated;
+        return {
+          description: item.description,
+          quantity: 1,
+          unitPrice: fractionalPrice,
+          isvType,
+          isExonerated,
+          exemptionOrderNumber: isExonerated
+            ? (form.globalExemptionOrder.trim() || item.exemptionOrderNumber || null)
+            : null,
+        };
+      });
+
+      await createInvoice({
+        isReceipt: form.isReceipt,
+        // La primera porción "posee" la(s) habitación(es) y la marca como facturada.
+        reservationIds: i === 0 && allReservationIds.length > 0 ? allReservationIds : undefined,
+        // TODAS las porciones (incluida la primera) referencian la reserva solo para
+        // mostrar las fechas de entrada/salida. Se usa splitSourceReservationId porque
+        // NO es único (reservationId sí lo es) → soporta divisiones de 3+ pagos.
+        splitSourceReservationId: allReservationIds.length > 0 ? allReservationIds[0] : undefined,
+        guestId: split.guestId,
+        companyId: split.companyId ?? null,
+        customerName: split.customerName,
+        customerRtn: split.customerRtn,
+        paymentMethod: split.paymentMethod,
+        paymentReference: split.paymentReference || undefined,
+        items: splitItems,
+      });
+    }
+
     navigate("/invoices");
   };
 
@@ -190,21 +270,34 @@ export default function NewInvoicePage() {
             handleSelectGuest={form.handleSelectGuest}
             handleSelectCompany={form.handleSelectCompany}
             clearCustomer={form.clearCustomer}
+            companyGuest={form.companyGuest}
+            setCompanyGuest={form.setCompanyGuest}
+            companyGuestSearch={form.companyGuestSearch}
+            setCompanyGuestSearch={form.setCompanyGuestSearch}
+            companyGuestResults={form.companyGuestResults}
             isExonerada={form.isExonerada}
             setIsExonerada={form.setIsExonerada}
             globalExemptionOrder={form.globalExemptionOrder}
             setGlobalExemptionOrder={form.setGlobalExemptionOrder}
-            paymentMethod={form.paymentMethod}
-            setPaymentMethod={form.setPaymentMethod}
-            cashReceived={form.cashReceived}
-            setCashReceived={form.setCashReceived}
-            change={form.change}
-            paymentReference={form.paymentReference}
-            setPaymentReference={form.setPaymentReference}
+            payments={form.payments}
+            setPaymentRow={form.setPaymentRow}
+            addPaymentRow={form.addPaymentRow}
+            removePaymentRow={form.removePaymentRow}
+            cashChange={form.cashChange}
             error={form.error}
             isSaving={isCreating}
             onClose={handleClose}
+            onSplitInvoice={() => setShowSplitModal(true)}
+            onProforma={handleProforma}
           />
+
+          {showSplitModal && (
+            <SplitInvoiceModal
+              totals={form.totals}
+              onConfirm={handleSplitSave}
+              onClose={() => setShowSplitModal(false)}
+            />
+          )}
         </div>
       </form>
     </div>

@@ -11,7 +11,7 @@ const AVAIL_FILTERS = [
 ];
 
 const formatLPS = (n) =>
-  `L. ${Number(n).toLocaleString("es-HN", { minimumFractionDigits: 2 })}`;
+  `L. ${Number(n).toLocaleString("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function RestaurantPage() {
   const user   = useAuthStore((s) => s.user);

@@ -5,18 +5,13 @@ export default function InvoiceRoomTab({ filteredRooms, items, addRoomHospedaje,
   if (filteredRooms.length === 0)
     return <p className="text-center text-gray-300 text-sm py-10">No hay huéspedes hospedados</p>;
 
-  const activeReservationId = filteredRooms.find((res) => {
-    if (items.some((i) => i._key === `room-${res.id}`)) return true;
-    return (res.reservationCharges ?? []).some((c) => items.some((i) => i._key === `rescharge-${c.id}`));
-  })?.id ?? null;
-
   return (
     <div className="space-y-2">
       {filteredRooms.map((res) => {
         const rc     = res.roomCharged;
         const nights = rc?.nights ?? Math.max(1, Math.ceil((new Date(res.checkOut) - new Date(res.checkIn)) / (1000 * 60 * 60 * 24)));
         const total  = rc ? Number(rc.total) : Number(res.totalAmount);
-        const billed = !!res.invoice && !res.invoice.voided;
+        const billed = !!res.roomCharged?.invoiceId;
 
         const pendingCharges   = (res.reservationCharges ?? []).filter((c) => !c.invoiceId);
         const pendingReception = pendingCharges.filter((c) => c.isvType === "RECEPTION");
@@ -32,15 +27,12 @@ export default function InvoiceRoomTab({ filteredRooms, items, addRoomHospedaje,
         const foodAdded      = pendingFood.length > 0 && pendingFood.some((c) => items.some((i) => i._key === `rescharge-${c.id}`));
         const otherAdded     = pendingOther.length > 0 && pendingOther.some((c) => items.some((i) => i._key === `rescharge-${c.id}`));
 
-        const locked  = activeReservationId !== null && activeReservationId !== res.id;
         const hasRows = !billed || pendingReception.length > 0 || pendingFood.length > 0 || pendingOther.length > 0;
 
         return (
           <div
             key={res.id}
-            className={`rounded-xl border transition-all ${
-              locked ? "border-gray-100 bg-gray-50 opacity-40 select-none" : "border-gray-200 bg-white"
-            }`}
+            className="rounded-xl border border-gray-200 bg-white transition-all"
           >
             {/* Header */}
             <div className="flex items-center gap-2 px-3 py-2">
@@ -52,7 +44,7 @@ export default function InvoiceRoomTab({ filteredRooms, items, addRoomHospedaje,
             </div>
 
             {/* Billable rows */}
-            {!locked && hasRows && (
+            {hasRows && (
               <div className="border-t border-gray-100 divide-y divide-gray-50">
 
                 {/* Hospedaje */}

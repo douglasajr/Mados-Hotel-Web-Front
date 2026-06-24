@@ -16,10 +16,10 @@ export default function InvoiceBottomPanel({
   selectedCustomer, billedAs, setBilledAs, resolvedCustomer,
   customerSearch, setCustomerSearch, guestResults, companyResults,
   handleSelectGuest, handleSelectCompany, clearCustomer,
+  companyGuest, setCompanyGuest, companyGuestSearch, setCompanyGuestSearch, companyGuestResults,
   isExonerada, setIsExonerada, globalExemptionOrder, setGlobalExemptionOrder,
-  paymentMethod, setPaymentMethod, cashReceived, setCashReceived, change,
-  paymentReference, setPaymentReference,
-  error, isSaving, onClose,
+  payments, setPaymentRow, addPaymentRow, removePaymentRow, cashChange,
+  error, isSaving, onClose, onSplitInvoice, onProforma,
 }) {
   return (
     <div className="border-t border-gray-100 p-4 space-y-3 bg-white shrink-0">
@@ -90,6 +90,41 @@ export default function InvoiceBottomPanel({
                   ))}
                 </div>
               )}
+
+              {/* Huésped referencia (opcional cuando se factura a empresa, sea directa o via reservación) */}
+              {resolvedCustomer.companyId && (
+                <div className="space-y-1">
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Huésped referencia <span className="normal-case font-normal">(opcional)</span></p>
+                  {companyGuest ? (
+                    <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5">
+                      <p className="text-xs text-gray-700 font-medium">{companyGuest.fullName}</p>
+                      <button type="button" onClick={() => { setCompanyGuest(null); setCompanyGuestSearch(""); }} className="text-[10px] text-gray-400 hover:text-red-500 ml-2">×</button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <Input
+                        value={companyGuestSearch}
+                        onChange={(e) => setCompanyGuestSearch(e.target.value)}
+                        placeholder="Nombre del huésped..."
+                        className="h-7 text-xs pl-6"
+                      />
+                      {companyGuestResults.length > 0 && (
+                        <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                          {companyGuestResults.map((g) => (
+                            <button key={g.id} type="button"
+                              onClick={() => { setCompanyGuest(g); setCompanyGuestSearch(""); }}
+                              className="w-full text-left px-3 py-2 hover:bg-amber-50 text-xs border-b border-gray-50 last:border-0">
+                              <p className="font-medium text-gray-900">{g.fullName}</p>
+                              {g.documentId && <p className="text-gray-400">{g.documentId}</p>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <div className="relative">
@@ -156,55 +191,143 @@ export default function InvoiceBottomPanel({
 
       {/* Método de pago */}
       <div className="space-y-2">
-        <Label className="text-xs">Método de pago</Label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {PAYMENT_OPTS.map((opt) => {
-            const disabled = opt.creditOnly && !resolvedCustomer.hasCredit;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => !disabled && setPaymentMethod(opt.value)}
-                disabled={disabled}
-                className={`py-2 text-xs font-medium rounded-lg border transition-all ${
-                  disabled ? "opacity-30 cursor-not-allowed bg-gray-50 text-gray-400 border-gray-200"
-                  : paymentMethod === opt.value ? "bg-amber-500 text-white border-amber-500"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
-                }`}
-              >
-                {opt.label}
-                {opt.creditOnly && !resolvedCustomer.hasCredit && <span className="block text-[9px] font-normal opacity-60">Solo empresas</span>}
-              </button>
-            );
-          })}
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Método de pago</Label>
+          {payments.length === 1 && (
+            <button type="button" onClick={addPaymentRow} className="text-[10px] text-amber-600 hover:text-amber-700 font-medium">
+              + Dividir pago
+            </button>
+          )}
         </div>
 
-        {paymentMethod === "CASH" && (
-          <div className="bg-green-50 rounded-lg px-3 py-2.5 space-y-2">
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-gray-600 w-28 shrink-0">Monto recibido</Label>
-              <Input type="number" value={cashReceived} onChange={(e) => setCashReceived(e.target.value)} placeholder="0.00" className="h-7 text-sm flex-1" autoFocus />
+        {payments.length === 1 ? (
+          <>
+            <div className="grid grid-cols-2 gap-1.5">
+              {PAYMENT_OPTS.map((opt) => {
+                const disabled = opt.creditOnly && !resolvedCustomer.hasCredit;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => !disabled && setPaymentRow(0, "method", opt.value)}
+                    disabled={disabled}
+                    className={`py-2 text-xs font-medium rounded-lg border transition-all ${
+                      disabled ? "opacity-30 cursor-not-allowed bg-gray-50 text-gray-400 border-gray-200"
+                      : payments[0].method === opt.value ? "bg-amber-500 text-white border-amber-500"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"
+                    }`}
+                  >
+                    {opt.label}
+                    {opt.creditOnly && !resolvedCustomer.hasCredit && <span className="block text-[9px] font-normal opacity-60">Solo empresas</span>}
+                  </button>
+                );
+              })}
             </div>
-            {change !== null && (
-              <div className={`flex items-center justify-between text-xs font-semibold ${change < 0 ? "text-red-600" : "text-green-700"}`}>
-                <span>{change < 0 ? "Falta" : "Vuelto"}</span>
-                <span>{formatLPS(Math.abs(change))}</span>
+
+            {payments[0].method === "CASH" && (
+              <div className="bg-green-50 rounded-lg px-3 py-2.5 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-gray-600 w-28 shrink-0">Monto recibido</Label>
+                  <Input type="number" value={payments[0].amount} onChange={(e) => setPaymentRow(0, "amount", e.target.value)} placeholder="0.00" className="h-7 text-sm flex-1" autoFocus />
+                </div>
+                {cashChange !== null && (
+                  <div className={`flex items-center justify-between text-xs font-semibold ${cashChange < 0 ? "text-red-600" : "text-green-700"}`}>
+                    <span>{cashChange < 0 ? "Falta" : "Vuelto"}</span>
+                    <span>{formatLPS(Math.abs(cashChange))}</span>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {["CARD", "TRANSFER"].includes(paymentMethod) && (
-          <Input
-            value={paymentReference}
-            onChange={(e) => setPaymentReference(e.target.value)}
-            placeholder={paymentMethod === "CARD" ? "N° de referencia / autorización" : "N° de transferencia / confirmación"}
-            className="h-8 text-sm"
-          />
+            {["CARD", "TRANSFER"].includes(payments[0].method) && (
+              <Input
+                value={payments[0].reference}
+                onChange={(e) => setPaymentRow(0, "reference", e.target.value)}
+                placeholder={payments[0].method === "CARD" ? "N° de referencia / autorización" : "N° de transferencia / confirmación"}
+                className="h-8 text-sm"
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {payments.map((p, idx) => (
+                <div key={idx} className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={p.method}
+                      onChange={(e) => setPaymentRow(idx, "method", e.target.value)}
+                      className="flex-1 h-8 rounded-lg border border-gray-200 bg-white text-xs px-2 focus:outline-none focus:border-amber-400"
+                    >
+                      <option value="">Método...</option>
+                      {PAYMENT_OPTS.map((opt) => (
+                        <option key={opt.value} value={opt.value} disabled={opt.creditOnly && !resolvedCustomer.hasCredit}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      type="number"
+                      value={p.amount}
+                      onChange={(e) => setPaymentRow(idx, "amount", e.target.value)}
+                      placeholder="0.00"
+                      className="w-24 h-8 text-sm"
+                    />
+                    <button type="button" onClick={() => removePaymentRow(idx)} className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 text-base leading-none">
+                      ×
+                    </button>
+                  </div>
+                  {["CARD", "TRANSFER"].includes(p.method) && (
+                    <Input
+                      value={p.reference}
+                      onChange={(e) => setPaymentRow(idx, "reference", e.target.value)}
+                      placeholder={p.method === "CARD" ? "N° referencia / autorización" : "N° transferencia / confirmación"}
+                      className="h-7 text-xs"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {(() => {
+              const paidSum = payments.filter((p) => p.method && p.amount).reduce((s, p) => s + Number(p.amount || 0), 0);
+              const diff = paidSum - totals.grandTotal;
+              return (
+                <div className={`flex justify-between text-xs font-medium px-1 ${Math.abs(diff) <= 0.01 ? "text-green-600" : "text-red-600"}`}>
+                  <span>Pagado: {formatLPS(paidSum)}</span>
+                  <span>{Math.abs(diff) <= 0.01 ? "✓ Cuadra" : diff > 0 ? `Sobra ${formatLPS(diff)}` : `Falta ${formatLPS(Math.abs(diff))}`}</span>
+                </div>
+              );
+            })()}
+
+            <button type="button" onClick={addPaymentRow} className="w-full text-center text-[11px] text-amber-600 hover:text-amber-700 font-medium py-1.5 border border-dashed border-amber-200 rounded-lg hover:bg-amber-50 transition-colors">
+              + Agregar método de pago
+            </button>
+          </>
         )}
       </div>
 
       {error && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+
+      {!isReceipt && items.length > 0 && onSplitInvoice && (
+        <button
+          type="button"
+          onClick={onSplitInvoice}
+          className="w-full text-center text-[11px] text-amber-600 hover:text-amber-700 font-medium py-1.5 border border-dashed border-amber-200 rounded-lg hover:bg-amber-50 transition-colors"
+        >
+          Dividir entre huéspedes
+        </button>
+      )}
+
+      {items.length > 0 && onProforma && (
+        <button
+          type="button"
+          onClick={onProforma}
+          className="w-full text-center text-[11px] text-orange-600 hover:text-orange-700 font-medium py-1.5 border border-dashed border-orange-300 rounded-lg hover:bg-orange-50 transition-colors"
+        >
+          Ver proforma (sin valor fiscal)
+        </button>
+      )}
 
       <div className="flex gap-2">
         <Button type="button" variant="outline" className="flex-1 h-9 text-sm" onClick={onClose}>Cancelar</Button>

@@ -23,6 +23,49 @@ export function amountToWords(amount) {
 
 export const ISV_RATES = { ROOM: 0.19, FOOD: 0.15, RECEPTION: 0.15, EXENTO: 0 };
 
+// Arma un objeto "factura" FALSO a partir del carrito para imprimir una proforma.
+// NO toca la base de datos, NO consume correlativo del CAI, NO afecta inventario
+// ni crédito. Es puramente informativo (cotización sin valor fiscal).
+export function buildProformaInvoice({ items, totals, resolvedCustomer, selectedCustomer, payments, isExonerada, globalExemptionOrder, fiscalConfig, createdByName }) {
+  const validPayments = (payments ?? []).filter((p) => p.method);
+  const mappedItems = items.map((i) => {
+    const isExo = isExonerada || i.isExonerated;
+    return {
+      description: i.description,
+      quantity: Number(i.quantity),
+      unitPrice: Number(i.unitPrice),
+      subtotal: Number(i.quantity) * Number(i.unitPrice),
+      isvType: isExo ? "EXENTO" : i.isvType,
+      isExonerated: isExo,
+      exemptionOrderNumber: isExo ? (globalExemptionOrder?.trim() || i.exemptionOrderNumber || null) : null,
+    };
+  });
+
+  return {
+    documentType: "PROFORMA",
+    correlative: "PROFORMA",
+    issuedAt: new Date(),
+    voided: false,
+    fiscalConfig: fiscalConfig ?? {},
+    customerName: resolvedCustomer?.name ?? "Consumidor Final",
+    customerRtn: resolvedCustomer?.rtn,
+    guest: selectedCustomer?.type === "guest" ? { fullName: selectedCustomer.fullName } : null,
+    createdByName: createdByName ?? null,
+    items: mappedItems,
+    subtotal: totals.subtotal,
+    isv15: totals.isv15,
+    isv4: totals.isv4,
+    isvExento: totals.isvExento ?? 0,
+    grandTotal: totals.grandTotal,
+    payments: validPayments.length > 1
+      ? validPayments.map((p) => ({ method: p.method, amount: Number(p.amount || 0), reference: p.reference || null }))
+      : undefined,
+    paymentMethod: validPayments.length === 1 ? validPayments[0].method : (validPayments[0]?.method ?? null),
+    paymentReference: validPayments.length === 1 ? (validPayments[0].reference || null) : null,
+    paymentStatus: "PAID",
+  };
+}
+
 export function calcItemBreakdown(item) {
   const totalConISV = Number(item.subtotal);
   const unitConISV  = Number(item.unitPrice);

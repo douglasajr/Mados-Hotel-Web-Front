@@ -23,7 +23,7 @@ const SUGGESTED_CATEGORIES = [
 ];
 
 const formatLPS = (amount) =>
-  `L. ${Number(amount).toLocaleString("es-HN", { minimumFractionDigits: 2 })}`;
+  `L. ${Number(amount).toLocaleString("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function MenuItemModal({ item, onClose, onSave, isSaving }) {
   const [name, setName] = useState(item?.name ?? "");

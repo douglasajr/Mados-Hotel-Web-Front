@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { loginApi } from '../../api/auth.api'
 
-// import logo from '../../assets/logo.png'
-
 export default function LoginPage() {
   const navigate = useNavigate()
   const { setLogin, setTempToken } = useAuthStore()

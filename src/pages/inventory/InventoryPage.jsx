@@ -49,7 +49,7 @@ const SCOPE_LABELS = {
 };
 
 const formatLPS = (amount) =>
-  `L. ${Number(amount).toLocaleString("es-HN", { minimumFractionDigits: 2 })}`;
+  `L. ${Number(amount).toLocaleString("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const getCategoryScope = (product) => product.category?.scope ?? "GENERAL";
 const isActive = (product) => product.active !== false;

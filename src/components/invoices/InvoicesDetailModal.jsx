@@ -81,6 +81,11 @@ export default function InvoiceDetailModal({ invoice, onClose }) {
                 RTN: {invoice.customerRtn}
               </p>
             )}
+            {invoice.guest?.fullName && invoice.billedTo === "COMPANY" && (
+              <p className="text-white/50 text-xs mt-1">
+                Huésped: {invoice.guest.fullName}
+              </p>
+            )}
           </div>
 
           {/* Detalle fiscal */}
@@ -106,16 +111,26 @@ export default function InvoiceDetailModal({ invoice, onClose }) {
           </div>
 
           {/* Pago */}
-          <div className="flex items-center justify-between">
-            <Badge
-              className={PAYMENT_STATUS_CONFIG[invoice.paymentStatus]?.class}
-            >
-              {PAYMENT_STATUS_CONFIG[invoice.paymentStatus]?.label}
-            </Badge>
-            {invoice.paymentMethod && (
-              <span className="text-sm text-gray-500">
-                {PAYMENT_METHOD_LABELS[invoice.paymentMethod]}
-              </span>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Badge className={PAYMENT_STATUS_CONFIG[invoice.paymentStatus]?.class}>
+                {PAYMENT_STATUS_CONFIG[invoice.paymentStatus]?.label}
+              </Badge>
+              {invoice.payments?.length > 0 ? (
+                <span className="text-sm text-gray-500">Pago mixto</span>
+              ) : invoice.paymentMethod ? (
+                <span className="text-sm text-gray-500">{PAYMENT_METHOD_LABELS[invoice.paymentMethod]}</span>
+              ) : null}
+            </div>
+            {invoice.payments?.length > 1 && (
+              <div className="space-y-0.5">
+                {invoice.payments.map((p, i) => (
+                  <div key={i} className="flex justify-between text-xs text-gray-500 px-1">
+                    <span>{PAYMENT_METHOD_LABELS[p.method] ?? p.method}</span>
+                    <span>{formatLPS(Number(p.amount))}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

@@ -1,10 +1,10 @@
 import {
   BedDouble, TrendingUp, AlertTriangle,
-  CreditCard, Package, UtensilsCrossed, ShoppingBag,
+  CreditCard, Package, UtensilsCrossed, ShoppingBag, FileText, Receipt,
 } from 'lucide-react'
 
 export const formatLPS = (amount) =>
-  `L. ${Number(amount).toLocaleString('es-HN', { minimumFractionDigits: 2 })}`
+  `L. ${Number(amount).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export const StatCard = ({ title, value, subtitle, icon: Icon, color }) => (
   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -221,6 +221,94 @@ export const CaiAlert = ({ caiAlert }) => {
         <p className="text-sm font-semibold text-orange-800">CAI por vencer en {caiAlert.daysUntilExpiry} días</p>
         <p className="text-xs text-orange-600">Vence el {new Date(caiAlert.expiryDate).toLocaleDateString('es-HN')}</p>
       </div>
+    </div>
+  )
+}
+
+// Facturado vs Recibo (mes en curso)
+export const BillingCard = ({ billing }) => {
+  if (!billing?.month) return null
+  const m = billing.month
+  const grand = m.total || 0
+  const rows = [
+    { label: 'Facturas (fiscal)', data: m.invoice, dot: 'bg-blue-500',  Icon: FileText },
+    { label: 'Recibos',           data: m.receipt, dot: 'bg-teal-500',  Icon: Receipt },
+  ]
+  return (
+    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <FileText size={16} className="text-blue-600" />Facturado este mes
+      </h3>
+      <p className="text-2xl font-bold text-gray-900 mb-4">
+        {formatLPS(grand)}<span className="text-sm font-normal text-gray-400 ml-2">total emitido</span>
+      </p>
+      <div className="space-y-3">
+        {rows.map(({ label, data, dot, Icon }) => {
+          const pct = grand > 0 ? Math.round((data.total / grand) * 100) : 0
+          return (
+            <div key={label}>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <Icon size={13} className="text-gray-400" />{label}
+                </span>
+                <span className="text-sm font-semibold text-gray-900">
+                  {formatLPS(data.total)}<span className="text-xs text-gray-400 ml-1">· {data.count} doc.</span>
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className={`h-1.5 rounded-full ${dot}`} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Estado del CAI: correlativos usados / faltantes / total + vencimiento
+export const CaiStatusCard = ({ caiAlert }) => {
+  if (!caiAlert?.correlatives) return null
+  const c = caiAlert.correlatives
+  const pct = Math.min(c.usagePercent, 100)
+  const barColor = c.isRunningOut ? 'bg-red-500' : pct >= 80 ? 'bg-orange-400' : 'bg-indigo-500'
+  return (
+    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <FileText size={16} className="text-indigo-600" />Estado del CAI
+      </h3>
+      <div className="grid grid-cols-3 gap-2.5 mb-4">
+        <div className="bg-indigo-50 rounded-lg p-3 text-center">
+          <p className="text-xl font-bold text-indigo-800">{c.used}</p>
+          <p className="text-xs text-indigo-600">Usados</p>
+        </div>
+        <div className={`rounded-lg p-3 text-center ${c.isRunningOut ? 'bg-red-50' : 'bg-green-50'}`}>
+          <p className={`text-xl font-bold ${c.isRunningOut ? 'text-red-700' : 'text-green-700'}`}>{c.remaining}</p>
+          <p className={`text-xs ${c.isRunningOut ? 'text-red-600' : 'text-green-600'}`}>Faltan</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-3 text-center">
+          <p className="text-xl font-bold text-gray-800">{c.total}</p>
+          <p className="text-xs text-gray-500">Total</p>
+        </div>
+      </div>
+      <div className="flex justify-between text-xs mb-1.5">
+        <span className="text-gray-500">Uso del rango</span>
+        <span className="font-semibold text-gray-900">{c.usagePercent}%</span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-2">
+        <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+        <span className="text-gray-500">Vence</span>
+        <span className={`font-medium ${caiAlert.isExpiringSoon ? 'text-orange-600' : 'text-gray-700'}`}>
+          {new Date(caiAlert.expiryDate).toLocaleDateString('es-HN')} · {caiAlert.daysUntilExpiry} días
+        </span>
+      </div>
+      {c.isRunningOut && (
+        <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
+          <AlertTriangle size={12} /> Quedan pocos correlativos — gestiona un nuevo CAI
+        </p>
+      )}
     </div>
   )
 }

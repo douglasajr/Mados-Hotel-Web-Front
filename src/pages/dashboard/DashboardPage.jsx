@@ -5,6 +5,7 @@ import { Building2, BedDouble, TrendingUp, AlertTriangle, CreditCard, Users } fr
 import {
   StatCard, RoomsCard, SalesCard, LowStockCard,
   PendingInvoicesCard, TopSellingCard, CompaniesAlertCard, CaiAlert,
+  BillingCard, CaiStatusCard,
   formatLPS,
 } from './DashboardCards'
 
@@ -19,6 +20,11 @@ const HotelDashboard = ({ data }) => (
       <StatCard title="Ventas hoy" value={formatLPS(data.sales.today.total)} subtitle="Total del día" icon={TrendingUp} color="bg-green-600" />
       <StatCard title="Por cobrar" value={formatLPS(data.pendingInvoices.total)} subtitle={`${data.pendingInvoices.count} factura${data.pendingInvoices.count !== 1 ? 's' : ''} a crédito`} icon={CreditCard} color="bg-red-500" />
       <StatCard title="Check-ins hoy" value={data.reservationsToday.checkIns} subtitle={`${data.reservationsToday.checkOuts} check-outs pendientes`} icon={Users} color="bg-purple-600" />
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <BillingCard billing={data.billing} />
+      <CaiStatusCard caiAlert={data.caiAlert} />
     </div>
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -44,7 +50,10 @@ const GlobalDashboard = ({ data }) => (
       <StatCard title="Crédito pendiente" value={formatLPS(data.global.pendingInvoices.total)} subtitle={`${data.global.pendingInvoices.count} facturas`} icon={CreditCard} color="bg-red-500" />
     </div>
 
-    <SalesCard sales={data.global.sales} />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <SalesCard sales={data.global.sales} />
+      <BillingCard billing={data.global.billing} />
+    </div>
 
     <div>
       <h2 className="text-base font-semibold text-gray-900 mb-4">Detalle por hotel</h2>
@@ -97,10 +106,12 @@ const GlobalDashboard = ({ data }) => (
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const user = useAuthStore(s => s.user)
-  const isSuperAdmin = user?.role === 'SUPERADMIN'
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['dashboard'],
+    // La caché se separa por rol: el dashboard global (SUPERADMIN) y el de hotel
+    // (ADMIN) tienen formas distintas. Sin esto, la caché de un rol podía servirse
+    // al otro y provocar un crash de render (pantalla en blanco tras login).
+    queryKey: ['dashboard', user?.role],
     queryFn: getDashboardApi,
     refetchInterval: 60000
   })
@@ -125,10 +136,13 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{isSuperAdmin ? 'Dashboard Global' : 'Dashboard'}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{data?.global ? 'Dashboard Global' : 'Dashboard'}</h1>
         <p className="text-gray-400 text-sm mt-1">{new Date().toLocaleDateString('es-HN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
-      {data && (isSuperAdmin ? <GlobalDashboard data={data} /> : <HotelDashboard data={data} />)}
+      {/* Se decide por la FORMA de los datos, no por el rol: el dashboard global
+          trae `data.global`. Así nunca se renderiza el componente equivocado con
+          datos incompatibles (lo que dejaba la pantalla en blanco). */}
+      {data && (data.global ? <GlobalDashboard data={data} /> : <HotelDashboard data={data} />)}
     </div>
   )
 }

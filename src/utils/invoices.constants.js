@@ -25,7 +25,7 @@ export const PAYMENT_METHOD_LABELS = {
 }
 
 export const formatLPS = (n) =>
-  `L. ${Number(n).toLocaleString('es-HN', { minimumFractionDigits: 2 })}`
+  `L. ${Number(n).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export const ISV_TYPE_LABELS = {
   ROOM:      'Habitación (19%)',
