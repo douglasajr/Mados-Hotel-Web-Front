@@ -2,9 +2,7 @@ import {
   BedDouble, TrendingUp, AlertTriangle,
   CreditCard, Package, UtensilsCrossed, ShoppingBag, FileText, Receipt,
 } from 'lucide-react'
-
-export const formatLPS = (amount) =>
-  `L. ${Number(amount).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+import { formatLPS } from '../../utils/invoices.constants'
 
 export const StatCard = ({ title, value, subtitle, icon: Icon, color }) => (
   <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">

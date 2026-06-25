@@ -6,8 +6,8 @@ import {
   StatCard, RoomsCard, SalesCard, LowStockCard,
   PendingInvoicesCard, TopSellingCard, CompaniesAlertCard, CaiAlert,
   BillingCard, CaiStatusCard,
-  formatLPS,
 } from './DashboardCards'
+import { formatLPS } from '../../utils/invoices.constants'
 
 // ── Dashboard por hotel (ADMIN) ──────────────────────────────────────────────
 const HotelDashboard = ({ data }) => (

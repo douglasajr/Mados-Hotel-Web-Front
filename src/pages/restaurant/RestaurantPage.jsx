@@ -3,15 +3,13 @@ import { useMenu } from "../../hooks/useMenu";
 import { useAuthStore } from "../../store/auth.store";
 import { UtensilsCrossed, Search, Plus, Pencil, Power, MoreVertical } from "lucide-react";
 import MenuItemModal from "../../components/restaurant/MenuItemModal";
+import { formatLPS } from "../../utils/invoices.constants";
 
 const AVAIL_FILTERS = [
   { value: "ALL",         label: "Todos" },
   { value: "AVAILABLE",   label: "Disponibles" },
   { value: "UNAVAILABLE", label: "No disponibles" },
 ];
-
-const formatLPS = (n) =>
-  `L. ${Number(n).toLocaleString("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function RestaurantPage() {
   const user   = useAuthStore((s) => s.user);

@@ -40,6 +40,7 @@ import ProductModal from "../../components/inventory/ProductModal";
 import CategoryModal from "../../components/inventory/CategoryModal";
 import StockMovementModal from "../../components/inventory/StockMovementModal";
 import { useInventory } from "../../hooks/useInventory";
+import { formatLPS } from "../../utils/invoices.constants";
 
 const SCOPE_LABELS = {
   PULPERIA: "Pulpería",
@@ -47,9 +48,6 @@ const SCOPE_LABELS = {
   LIMPIEZA: "Limpieza",
   GENERAL: "General",
 };
-
-const formatLPS = (amount) =>
-  `L. ${Number(amount).toLocaleString("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const getCategoryScope = (product) => product.category?.scope ?? "GENERAL";
 const isActive = (product) => product.active !== false;

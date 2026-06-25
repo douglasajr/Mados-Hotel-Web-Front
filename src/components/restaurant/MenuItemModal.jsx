@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UtensilsCrossed } from "lucide-react";
+import { formatLPS } from "../../utils/invoices.constants";
 
 const SUGGESTED_CATEGORIES = [
   "Entradas",
@@ -21,9 +22,6 @@ const SUGGESTED_CATEGORIES = [
   "Mariscos",
   "Ensaladas",
 ];
-
-const formatLPS = (amount) =>
-  `L. ${Number(amount).toLocaleString("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function MenuItemModal({ item, onClose, onSave, isSaving }) {
   const [name, setName] = useState(item?.name ?? "");
