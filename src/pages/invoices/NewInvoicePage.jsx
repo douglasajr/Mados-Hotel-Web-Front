@@ -234,9 +234,11 @@ export default function NewInvoicePage() {
           </div>
         </div>
 
-        {/* Carrito */}
-        <div className="flex flex-col lg:w-[45%] lg:overflow-hidden bg-white">
-          <div className="lg:flex-1 overflow-y-auto p-4 space-y-2">
+        {/* Carrito — la columna entera hace scroll (ítems + panel de pago juntos),
+            así en pantallas de poca altura (ej. 1366x768) los ítems no quedan
+            aplastados en un scroll diminuto. */}
+        <div className="flex flex-col lg:w-[45%] lg:overflow-y-auto bg-white">
+          <div className="lg:flex-1 p-4 space-y-2">
             <InvoiceCartItems
               items={form.items}
               updateQty={form.updateQty}
