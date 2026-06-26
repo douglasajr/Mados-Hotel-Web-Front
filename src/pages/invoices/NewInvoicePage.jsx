@@ -108,7 +108,7 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="min-h-full lg:h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-100 bg-white shrink-0">
         <button
@@ -141,10 +141,10 @@ export default function NewInvoicePage() {
       {/* Two-panel layout */}
       <form
         onSubmit={(e) => form.handleSubmit(e, handleSave, handleClose)}
-        className="flex flex-col md:flex-row flex-1 overflow-hidden"
+        className="flex flex-col lg:flex-row flex-1 lg:overflow-hidden"
       >
         {/* Catálogo */}
-        <div className="flex flex-col md:w-[55%] border-r border-gray-100 overflow-hidden bg-white">
+        <div className="flex flex-col lg:w-[55%] border-b lg:border-b-0 lg:border-r border-gray-100 lg:overflow-hidden bg-white">
           <div className="flex border-b border-gray-100 shrink-0">
             {CATALOG_TABS.map(({ key, label, Icon }) => (
               <button
@@ -175,7 +175,7 @@ export default function NewInvoicePage() {
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+          <div className="h-[45vh] lg:h-auto lg:flex-1 overflow-y-auto p-3 space-y-1">
             {form.activeTab === "menu" && (
               form.filteredMenu.length === 0 ? (
                 <p className="text-center text-gray-300 text-sm py-10">Sin resultados</p>
@@ -235,8 +235,8 @@ export default function NewInvoicePage() {
         </div>
 
         {/* Carrito */}
-        <div className="flex flex-col md:w-[45%] overflow-hidden bg-white">
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex flex-col lg:w-[45%] lg:overflow-hidden bg-white">
+          <div className="lg:flex-1 overflow-y-auto p-4 space-y-2">
             <InvoiceCartItems
               items={form.items}
               updateQty={form.updateQty}
