@@ -151,7 +151,7 @@ export default function ShiftsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide border-b border-gray-100">
-                  <th className="text-left px-4 py-3 font-medium">Usuario</th>
+                  {isAdmin && <th className="text-left px-4 py-3 font-medium">Usuario</th>}
                   <th className="text-left px-4 py-3 font-medium">Apertura</th>
                   <th className="text-left px-4 py-3 font-medium">Cierre</th>
                   <th className="text-left px-4 py-3 font-medium">Estado</th>
@@ -161,7 +161,7 @@ export default function ShiftsPage() {
               <tbody className="divide-y divide-gray-50">
                 {shifts.map((s) => (
                   <tr key={s.id} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-3 text-gray-700 font-medium">{s.user?.username}</td>
+                    {isAdmin && <td className="px-4 py-3 text-gray-700 font-medium">{s.user?.username}</td>}
                     <td className="px-4 py-3 text-gray-500">
                       {new Date(s.startTime).toLocaleString('es-HN')}
                     </td>

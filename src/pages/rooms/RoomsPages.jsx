@@ -34,6 +34,8 @@ export default function RoomsPage() {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const user = useAuthStore((s) => s.user);
   const isAdmin = ["SUPERADMIN", "ADMIN"].includes(user?.role);
+  // El recepcionista puede cambiar el estado de una habitación (no crear/editar/eliminar)
+  const canChangeStatus = isAdmin || user?.role === "RECEPTIONIST";
 
   const debouncedSearch = useDebounce(search, 400);
 
@@ -209,7 +211,7 @@ export default function RoomsPage() {
                           Editar
                         </DropdownMenuItem>
                       )}
-                      {isAdmin && ROOM_STATUSES.filter((s) => s !== room.status).map(
+                      {canChangeStatus && ROOM_STATUSES.filter((s) => s !== room.status).map(
                         (s) => (
                           <DropdownMenuItem
                             key={s}
