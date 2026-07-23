@@ -62,6 +62,8 @@ export default function NewInvoicePage() {
       payments: form.payments,
       isExonerada: form.isExonerada,
       globalExemptionOrder: form.globalExemptionOrder,
+      exemptionRegistry: form.exemptionRegistry,
+      sagRegistry: form.sagRegistry,
       fiscalConfig,
     });
     const w = window.open("", "_blank", "width=850,height=900");
@@ -296,6 +298,10 @@ export default function NewInvoicePage() {
             setIsExonerada={form.setIsExonerada}
             globalExemptionOrder={form.globalExemptionOrder}
             setGlobalExemptionOrder={form.setGlobalExemptionOrder}
+            exemptionRegistry={form.exemptionRegistry}
+            setExemptionRegistry={form.setExemptionRegistry}
+            sagRegistry={form.sagRegistry}
+            setSagRegistry={form.setSagRegistry}
             payments={form.payments}
             setPaymentRow={form.setPaymentRow}
             addPaymentRow={form.addPaymentRow}

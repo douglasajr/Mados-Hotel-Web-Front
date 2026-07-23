@@ -24,6 +24,8 @@ export function useInvoiceForm() {
   const [payments, setPayments]                     = useState([{ method: "", amount: "", reference: "" }]);
   const [isExonerada, setIsExonerada]               = useState(false);
   const [globalExemptionOrder, setGlobalExemptionOrder] = useState("");
+  const [exemptionRegistry, setExemptionRegistry]   = useState(""); // N° registro exonerado
+  const [sagRegistry, setSagRegistry]               = useState(""); // N° registro SAG
   const [manualDesc, setManualDesc]                 = useState("");
   const [manualQty, setManualQty]                   = useState("1");
   const [manualPrice, setManualPrice]               = useState("");
@@ -297,6 +299,9 @@ export function useInvoiceForm() {
         productItems: productItems.length > 0 ? productItems : undefined,
         reservationChargeIds: reservationChargeIds.length > 0 ? reservationChargeIds : undefined,
         items: items.map((i) => normalizeInvoiceItem(isExonerada ? { ...i, isExonerated: true, isvType: "EXENTO", exemptionOrderNumber: globalExemptionOrder.trim() || null } : i)),
+        // Datos del adquiriente exonerado (solo si la factura es exonerada)
+        exemptionRegistry: isExonerada ? (exemptionRegistry.trim() || null) : null,
+        sagRegistry: isExonerada ? (sagRegistry.trim() || null) : null,
       });
       onClose();
     } catch (err) {
@@ -317,6 +322,7 @@ export function useInvoiceForm() {
     handleSelectGuest, handleSelectCompany, clearCustomer,
     payments, setPaymentRow, addPaymentRow, removePaymentRow, isCreditPayment, cashChange,
     isExonerada, setIsExonerada, globalExemptionOrder, setGlobalExemptionOrder,
+    exemptionRegistry, setExemptionRegistry, sagRegistry, setSagRegistry,
     manualDesc, setManualDesc, manualQty, setManualQty,
     manualPrice, setManualPrice, manualIsvType, setManualIsvType,
     manualExemptOrder, setManualExemptOrder,

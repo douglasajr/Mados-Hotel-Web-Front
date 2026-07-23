@@ -18,6 +18,7 @@ export default function InvoiceBottomPanel({
   handleSelectGuest, handleSelectCompany, clearCustomer,
   companyGuest, setCompanyGuest, companyGuestSearch, setCompanyGuestSearch, companyGuestResults,
   isExonerada, setIsExonerada, globalExemptionOrder, setGlobalExemptionOrder,
+  exemptionRegistry, setExemptionRegistry, sagRegistry, setSagRegistry,
   payments, setPaymentRow, addPaymentRow, removePaymentRow, cashChange,
   error, isSaving, onClose, onSplitInvoice, onProforma,
 }) {
@@ -184,7 +185,11 @@ export default function InvoiceBottomPanel({
             </span>
           </button>
           {isExonerada && (
-            <Input value={globalExemptionOrder} onChange={(e) => setGlobalExemptionOrder(e.target.value)} placeholder="N° orden de exoneración (opcional)" className="h-8 text-sm border-teal-200 focus:border-teal-400" />
+            <div className="space-y-1.5">
+              <Input value={globalExemptionOrder} onChange={(e) => setGlobalExemptionOrder(e.target.value)} placeholder="N° orden de compra exenta" className="h-8 text-sm border-teal-200 focus:border-teal-400" />
+              <Input value={exemptionRegistry ?? ""} onChange={(e) => setExemptionRegistry(e.target.value)} placeholder="N° registro exonerado" className="h-8 text-sm border-teal-200 focus:border-teal-400" />
+              <Input value={sagRegistry ?? ""} onChange={(e) => setSagRegistry(e.target.value)} placeholder="N° registro SAG" className="h-8 text-sm border-teal-200 focus:border-teal-400" />
+            </div>
           )}
         </div>
       )}

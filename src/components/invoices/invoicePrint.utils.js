@@ -26,7 +26,7 @@ export const ISV_RATES = { ROOM: 0.19, FOOD: 0.15, RECEPTION: 0.15, EXENTO: 0 };
 // Arma un objeto "factura" FALSO a partir del carrito para imprimir una proforma.
 // NO toca la base de datos, NO consume correlativo del CAI, NO afecta inventario
 // ni crédito. Es puramente informativo (cotización sin valor fiscal).
-export function buildProformaInvoice({ items, totals, resolvedCustomer, selectedCustomer, payments, isExonerada, globalExemptionOrder, fiscalConfig, createdByName }) {
+export function buildProformaInvoice({ items, totals, resolvedCustomer, selectedCustomer, payments, isExonerada, globalExemptionOrder, exemptionRegistry, sagRegistry, fiscalConfig, createdByName }) {
   const validPayments = (payments ?? []).filter((p) => p.method);
   const mappedItems = items.map((i) => {
     const isExo = isExonerada || i.isExonerated;
@@ -49,6 +49,8 @@ export function buildProformaInvoice({ items, totals, resolvedCustomer, selected
     fiscalConfig: fiscalConfig ?? {},
     customerName: resolvedCustomer?.name ?? "Consumidor Final",
     customerRtn: resolvedCustomer?.rtn,
+    exemptionRegistry: exemptionRegistry ?? null,
+    sagRegistry: sagRegistry ?? null,
     guest: selectedCustomer?.type === "guest" ? { fullName: selectedCustomer.fullName } : null,
     createdByName: createdByName ?? null,
     items: mappedItems,
