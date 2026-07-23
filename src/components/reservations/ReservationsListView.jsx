@@ -19,14 +19,17 @@ const FILTERS = [
 ];
 
 // Vista de lista de reservaciones. Se usa en dos modos:
-//   - Gestionar (readOnly=false): la tabla muestra las acciones (check-in/out,
+//   - Gestionar (readOnly=false): el trabajo del día. Solo los filtros de hoy
+//     (llegan / en hotel / salen), y la tabla con acciones (check-in/out,
 //     cargos, editar fechas, cancelar).
-//   - Ver (readOnly=true): solo consulta, sin acciones.
+//   - Ver (readOnly=true): solo consulta, con "Todas" para ver el historial.
 export default function ReservationsListView({ readOnly = false, title, subtitle }) {
+  const visibleFilters = readOnly ? FILTERS : FILTERS.filter((f) => f.key !== "ALL");
+
   const [checkoutRes, setCheckoutRes]   = useState(null);
   const [chargesResId, setChargesResId] = useState(null);
   const [editDatesRes, setEditDatesRes] = useState(null);
-  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [activeFilter, setActiveFilter] = useState(readOnly ? "ALL" : "ARRIVALS");
   const [search, setSearch]             = useState("");
 
   const today = getToday();
@@ -105,7 +108,7 @@ export default function ReservationsListView({ readOnly = false, title, subtitle
 
       {/* Filtros / Estadísticas del día */}
       <div className="flex gap-2 flex-wrap">
-        {FILTERS.map((f) => {
+        {visibleFilters.map((f) => {
           const Icon     = f.icon;
           const isActive = activeFilter === f.key;
           const count    = f.countKey ? counts[f.countKey] : null;

@@ -26,8 +26,6 @@ import {
   ShoppingCart,
   CalendarPlus,
   Eye,
-  UserPlus,
-  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { switchHotelApi } from "../../api/auth.api";
@@ -73,25 +71,12 @@ const navItems = [
       { to: "/reservations/ver",   icon: Eye,           label: "Ver reservaciones",       roles: FRONT_DESK },
     ],
   },
-  {
-    key: "huespedes", icon: Users, label: "Huéspedes",
-    children: [
-      { to: "/guests/nuevo", icon: UserPlus, label: "Crear huésped",       roles: FRONT_DESK },
-      { to: "/guests",       icon: UserCog,  label: "Gestionar huéspedes", roles: FRONT_DESK },
-      { to: "/guests/ver",   icon: Eye,      label: "Ver huéspedes",       roles: FRONT_DESK },
-    ],
-  },
-  {
-    key: "empresas", icon: Building2, label: "Empresas",
-    children: [
-      { to: "/companies/nueva", icon: Plus,      label: "Crear empresa",      roles: ADMIN_ONLY },
-      { to: "/companies",       icon: Building2, label: "Gestionar empresas", roles: ALL_STAFF },
-      { to: "/companies/ver",   icon: Eye,       label: "Ver empresas",       roles: ALL_STAFF },
-    ],
-  },
-
-  { to: "/rooms",        icon: BedDouble,  label: "Habitaciones", roles: FRONT_DESK },
-  { to: "/room-charges", icon: CreditCard, label: "Room Charged", roles: ALL_STAFF },
+  // Huéspedes, empresas y habitaciones van directo a "Ver": crear y gestionar
+  // se alcanzan desde el encabezado de esas pantallas, no desde el menú.
+  { to: "/guests/ver",    icon: Users,      label: "Ver huéspedes",   roles: FRONT_DESK },
+  { to: "/companies/ver", icon: Building2,  label: "Ver empresas",    roles: ALL_STAFF },
+  { to: "/rooms",         icon: BedDouble,  label: "Ver habitaciones", roles: FRONT_DESK },
+  { to: "/room-charges",  icon: CreditCard, label: "Room Charged",     roles: ALL_STAFF },
 
   {
     key: "caja", icon: DollarSign, label: "Caja",

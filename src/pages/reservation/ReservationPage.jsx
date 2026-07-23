@@ -6,7 +6,7 @@ export default function ReservationsPage() {
   return (
     <ReservationsListView
       title="Gestionar reservaciones"
-      subtitle="Check-in, check-out, cargos y cambios de reservaciones"
+      subtitle="El movimiento de hoy: llegadas, huéspedes en hotel y salidas"
     />
   );
 }

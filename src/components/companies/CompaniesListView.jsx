@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useCompanies } from "../../hooks/useCompanies";
-import { Search, Building2, AlertCircle } from "lucide-react";
+import { Search, Building2, AlertCircle, Plus, Pencil } from "lucide-react";
 import CompanyModal from "./CompanyModal";
 import CompanyTable from "./CompanyTable";
 import CreditModal from "./CreditModal";
@@ -65,12 +66,40 @@ export default function CompaniesListView({ readOnly = false, title, subtitle })
 
   return (
     <div className="p-6 space-y-5">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {subtitle ?? `${total} empresa${total !== 1 ? "s" : ""} registrada${total !== 1 ? "s" : ""}`}
-        </p>
+      {/* Header — en modo consulta lleva los accesos a crear y gestionar,
+          que ya no están en el menú lateral. */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {subtitle ?? `${total} empresa${total !== 1 ? "s" : ""} registrada${total !== 1 ? "s" : ""}`}
+          </p>
+        </div>
+
+        {readOnly && (
+          <div className="flex items-center gap-2">
+            <Link
+              to="/companies"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
+                         border border-gray-200 text-gray-600 bg-white
+                         hover:border-amber-300 hover:text-amber-600 transition-all"
+            >
+              <Pencil size={14} />
+              Gestionar
+            </Link>
+            {isAdmin && (
+              <Link
+                to="/companies/nueva"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white
+                           bg-linear-to-r from-amber-500 to-orange-500
+                           hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
+              >
+                <Plus size={15} />
+                Nueva empresa
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Buscador + filtro morosas */}

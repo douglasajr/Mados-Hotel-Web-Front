@@ -168,14 +168,6 @@ export function buildPrintHtml(invoice, stampType = null) {
     return acc;
   }, { subExonerado: 0, subExento: 0, sub15: 0, sub18: 0, isv15: 0, isv18: 0, isv4: 0 });
 
-  // Líneas de pago (EFECTIVO / TARJETA / …) al pie del cuadro de totales.
-  const paymentList = invoice.payments?.length
-    ? invoice.payments
-    : (invoice.paymentMethod ? [{ method: invoice.paymentMethod, amount: invoice.grandTotal }] : []);
-  const paymentRows = paymentList
-    .map((p) => `<div class="total-row"><span class="lbl">${(PAYMENT_METHOD_LABELS[p.method] ?? p.method ?? "").toUpperCase()}</span><span>L.&nbsp;${fmt(Number(p.amount ?? 0))}</span></div>`)
-    .join("");
-
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>${invoice.correlative}</title><style>${PRINT_CSS}</style></head><body>
 ${stampDiv}
 <div class="header">
@@ -204,7 +196,6 @@ ${isProforma
   <div class="total-row"><span class="lbl">ISV 18%</span><span>L.&nbsp;${fmt(sar.isv18)}</span></div>
   <div class="total-row"><span class="lbl">ISV 4%</span><span>L.&nbsp;${fmt(sar.isv4)}</span></div>
   <div class="total-grand"><span>TOTAL</span><span>L.&nbsp;${fmt(invoice.grandTotal)}</span></div>
-  ${paymentRows}
 </div></div>
 <div class="letras"><div class="letras-lbl">Total en letras</div><div class="letras-val">${amountToWords(invoice.grandTotal)}</div></div>
 <div class="footer">

@@ -6,7 +6,7 @@ export default function ViewReservationsPage() {
     <ReservationsListView
       readOnly
       title="Ver reservaciones"
-      subtitle="Consulta de reservaciones (solo lectura)"
+      subtitle="Historial completo de reservaciones (solo lectura)"
     />
   );
 }
