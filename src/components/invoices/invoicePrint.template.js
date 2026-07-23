@@ -146,6 +146,33 @@ export function buildPrintHtml(invoice, stampType = null) {
     ? invoice.payments.map(p => `<div class="info-row"><span>${PAYMENT_METHOD_LABELS[p.method] ?? p.method}:</span> L.&nbsp;${fmt(Number(p.amount))}${p.reference ? ` <span style="color:#888">(${p.reference})</span>` : ""}</div>`).join("")
     : `<div class="info-row"><span>Método:</span> ${PAYMENT_METHOD_LABELS[invoice.paymentMethod] ?? invoice.paymentMethod ?? "—"}</div>${invoice.paymentReference ? `<div class="info-row"><span>Referencia:</span> ${invoice.paymentReference}</div>` : ""}`;
 
+  // ── Desglose fiscal SAR ─────────────────────────────────────────────────────
+  // Se calcula desde los ítems (no desde los campos guardados) porque el
+  // hospedaje lleva 15% + 4% sobre la misma base, y el 15% de ROOM no queda en
+  // el campo isv15 almacenado. Categorías separadas: exonerado, exento, 15%, 18%.
+  const sar = (invoice.items ?? []).reduce((acc, item) => {
+    const lineTotal = Number(item.subtotal) || (Number(item.quantity) * Number(item.unitPrice)) || 0;
+    if (item.isExonerated) { acc.subExonerado += lineTotal; return acc; }
+    if (item.isvType === "EXENTO") { acc.subExento += lineTotal; return acc; }
+    if (item.isvType === "ROOM") {
+      const base = lineTotal / 1.19;               // 15% + 4% incluidos
+      acc.sub15 += base; acc.isv15 += base * 0.15; acc.isv4 += base * 0.04;
+    } else {                                        // FOOD, RECEPTION → 15%
+      const base = lineTotal / 1.15;
+      acc.sub15 += base; acc.isv15 += lineTotal - base;
+    }
+    // 18% no existe en el catálogo actual → sub18 / isv18 quedan en 0
+    return acc;
+  }, { subExonerado: 0, subExento: 0, sub15: 0, sub18: 0, isv15: 0, isv18: 0, isv4: 0 });
+
+  // Líneas de pago (EFECTIVO / TARJETA / …) al pie del cuadro de totales.
+  const paymentList = invoice.payments?.length
+    ? invoice.payments
+    : (invoice.paymentMethod ? [{ method: invoice.paymentMethod, amount: invoice.grandTotal }] : []);
+  const paymentRows = paymentList
+    .map((p) => `<div class="total-row"><span class="lbl">${(PAYMENT_METHOD_LABELS[p.method] ?? p.method ?? "").toUpperCase()}</span><span>L.&nbsp;${fmt(Number(p.amount ?? 0))}</span></div>`)
+    .join("");
+
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>${invoice.correlative}</title><style>${PRINT_CSS}</style></head><body>
 ${stampDiv}
 <div class="header">
@@ -166,12 +193,15 @@ ${isProforma
 ${hasExempt ? `<div class="exo-banner"><strong>Factura Exonerada</strong>${exemptionOrders ? ` &nbsp;·&nbsp; Orden N°: <strong>${exemptionOrders}</strong>` : ""}</div>` : ""}
 <table><thead><tr><th class="qty">Cant.</th><th style="text-align:left">Descripción</th><th class="num">P. Unit. s/ISV</th><th class="num">Total</th></tr></thead><tbody>${itemRows || `<tr><td colspan="4" style="text-align:center;color:#aaa;padding:12px">Sin ítems registrados</td></tr>`}</tbody></table>
 <div class="totals-wrap"><div class="totals-box">
-  ${T.gravado   > 0 ? `<div class="total-row"><span class="lbl">Subtotal gravado (s/ISV)</span><span>L.&nbsp;${fmt(T.gravado)}</span></div>` : ""}
-  ${T.isv15     > 0 ? `<div class="total-row"><span class="lbl">ISV 15%</span><span>L.&nbsp;${fmt(T.isv15)}</span></div>` : ""}
-  ${T.isv4      > 0 ? `<div class="total-row"><span class="lbl">ISV 4% (hospedaje)</span><span>L.&nbsp;${fmt(T.isv4)}</span></div>` : ""}
-  ${T.exonerado > 0 ? `<div class="total-row"><span class="lbl">Exonerado</span><span>L.&nbsp;${fmt(T.exonerado)}</span></div>` : ""}
-  ${T.exento    > 0 ? `<div class="total-row"><span class="lbl">Exento</span><span>L.&nbsp;${fmt(T.exento)}</span></div>` : ""}
-  <div class="total-grand"><span>TOTAL A PAGAR</span><span>L.&nbsp;${fmt(invoice.grandTotal)}</span></div>
+  <div class="total-row"><span class="lbl">SUBTOTAL EXONERADO</span><span>L.&nbsp;${fmt(sar.subExonerado)}</span></div>
+  <div class="total-row"><span class="lbl">SUBTOTAL EXENTO</span><span>L.&nbsp;${fmt(sar.subExento)}</span></div>
+  <div class="total-row"><span class="lbl">SUBTOTAL 15%</span><span>L.&nbsp;${fmt(sar.sub15)}</span></div>
+  <div class="total-row"><span class="lbl">SUBTOTAL 18%</span><span>L.&nbsp;${fmt(sar.sub18)}</span></div>
+  <div class="total-row"><span class="lbl">ISV 15%</span><span>L.&nbsp;${fmt(sar.isv15)}</span></div>
+  <div class="total-row"><span class="lbl">ISV 18%</span><span>L.&nbsp;${fmt(sar.isv18)}</span></div>
+  <div class="total-row"><span class="lbl">ISV 4%</span><span>L.&nbsp;${fmt(sar.isv4)}</span></div>
+  <div class="total-grand"><span>TOTAL</span><span>L.&nbsp;${fmt(invoice.grandTotal)}</span></div>
+  ${paymentRows}
 </div></div>
 <div class="letras"><div class="letras-lbl">Total en letras</div><div class="letras-val">${amountToWords(invoice.grandTotal)}</div></div>
 <div class="footer">
