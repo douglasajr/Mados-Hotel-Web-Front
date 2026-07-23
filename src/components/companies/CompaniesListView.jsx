@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCompanies } from "../../hooks/useCompanies";
-import { Search, Building2, AlertCircle, Plus, Pencil } from "lucide-react";
+import { Search, Building2, AlertCircle, Pencil } from "lucide-react";
 import CompanyModal from "./CompanyModal";
 import CompanyTable from "./CompanyTable";
 import CreditModal from "./CreditModal";
@@ -76,29 +76,17 @@ export default function CompaniesListView({ readOnly = false, title, subtitle })
           </p>
         </div>
 
+        {/* Crear ya está en el menú; gestionar no, así que se entra por aquí. */}
         {readOnly && (
-          <div className="flex items-center gap-2">
-            <Link
-              to="/companies"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
-                         border border-gray-200 text-gray-600 bg-white
-                         hover:border-amber-300 hover:text-amber-600 transition-all"
-            >
-              <Pencil size={14} />
-              Gestionar
-            </Link>
-            {isAdmin && (
-              <Link
-                to="/companies/nueva"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white
-                           bg-linear-to-r from-amber-500 to-orange-500
-                           hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
-              >
-                <Plus size={15} />
-                Nueva empresa
-              </Link>
-            )}
-          </div>
+          <Link
+            to="/companies"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
+                       border border-gray-200 text-gray-600 bg-white
+                       hover:border-amber-300 hover:text-amber-600 transition-all"
+          >
+            <Pencil size={14} />
+            Gestionar empresas
+          </Link>
         )}
       </div>
 
