@@ -8,7 +8,11 @@ import WelcomePage from "../pages/welcome/WelcomePage";
 import UsersPage from "../pages/users/UsersPages";
 import RoomsPage from "../pages/rooms/RoomsPages";
 import GuestsPage from "../pages/guests/GuestPage";
+import ViewGuestsPage from "../pages/guests/ViewGuestsPage";
+import CreateGuestPage from "../pages/guests/CreateGuestPage";
 import CompaniesPage from "../pages/companies/CompaniesPages";
+import ViewCompaniesPage from "../pages/companies/ViewCompaniesPage";
+import CreateCompanyPage from "../pages/companies/CreateCompanyPage";
 import ReservationsPage from "../pages/reservation/ReservationPage";
 import ViewReservationsPage from "../pages/reservation/ViewReservationsPage";
 import CreateReservationPage from "../pages/reservation/CreateReservationPage";
@@ -82,8 +86,12 @@ export default function AppRouter() {
           <Route path="reservations"       element={<ReservationsPage />} />
           <Route path="reservations/ver"   element={<ViewReservationsPage />} />
           <Route path="reservations/nueva" element={<CreateReservationPage />} />
-          <Route path="guests"       element={<GuestsPage />} />
-          <Route path="companies"    element={<CompaniesPage />} />
+          <Route path="guests"          element={<GuestsPage />} />
+          <Route path="guests/ver"      element={<ViewGuestsPage />} />
+          <Route path="guests/nuevo"    element={<CreateGuestPage />} />
+          <Route path="companies"       element={<CompaniesPage />} />
+          <Route path="companies/ver"   element={<ViewCompaniesPage />} />
+          <Route path="companies/nueva" element={<CreateCompanyPage />} />
           <Route path="invoices"     element={<InvoicesPage />} />
           <Route path="invoices/new" element={<NewInvoicePage />} />
           <Route path="room-charges" element={<RoomChargedPage />} />

@@ -15,6 +15,7 @@ export default function GuestTable({
   total,
   page,
   totalPages,
+  readOnly = false,
   onEdit,
   onPageChange,
 }) {
@@ -64,9 +65,11 @@ export default function GuestTable({
                 {guest.email ?? "—"}
               </TableCell>
               <TableCell>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(guest)}>
-                  <Pencil size={15} />
-                </Button>
+                {!readOnly && (
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(guest)}>
+                    <Pencil size={15} />
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))}

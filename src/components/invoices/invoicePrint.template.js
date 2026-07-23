@@ -56,7 +56,9 @@ const PRINT_CSS = `
   .total-row   { display: flex; justify-content: space-between; padding: 1.5px 9px; font-size: 10px; }
   .total-row:not(:last-child) { border-bottom: 1px solid #fde68a; }
   .total-row .lbl { color: #555; }
-  .total-grand { background: ${AMBER}; color: #fff; font-size: 11px; font-weight: bold; padding: 3px 9px; display: flex; justify-content: space-between; }
+  /* El TOTAL va en negro: imprime nítido en cualquier impresora (láser/térmica)
+     y no se degrada a un gris lavado como el fondo ámbar. */
+  .total-grand { background: #fff; color: #000; font-size: 12px; font-weight: bold; padding: 3.5px 9px; display: flex; justify-content: space-between; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; }
   .letras { border: 1px solid #fde68a; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; background: #fffbeb; }
   .letras-lbl { font-size: 8.5px; text-transform: uppercase; color: ${AMBER2}; margin-bottom: 1px; letter-spacing: .05em; }
   .letras-val { font-size: 9.5px; font-weight: bold; color: #111; font-style: italic; }

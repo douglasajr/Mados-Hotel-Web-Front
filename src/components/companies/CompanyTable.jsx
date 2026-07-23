@@ -29,6 +29,7 @@ export default function CompanyTable({
   totalPages,
   isAdmin,
   canRegisterPayment,
+  readOnly = false,
   onEdit,
   onCredit,
   onReport,
@@ -131,6 +132,9 @@ export default function CompanyTable({
                 </TableCell>
 
                 <TableCell>
+                  {/* En modo consulta solo queda el estado de cuenta: si la
+                      empresa no tiene crédito, el menú quedaría vacío. */}
+                  {(!readOnly || company.hasCredit) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
@@ -138,10 +142,12 @@ export default function CompanyTable({
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit(company)}>
-                        <Pencil size={14} className="mr-2" /> Editar
-                      </DropdownMenuItem>
-                      {company.hasCredit && canRegisterPayment && (
+                      {!readOnly && (
+                        <DropdownMenuItem onClick={() => onEdit(company)}>
+                          <Pencil size={14} className="mr-2" /> Editar
+                        </DropdownMenuItem>
+                      )}
+                      {!readOnly && company.hasCredit && canRegisterPayment && (
                         <DropdownMenuItem onClick={() => onCredit(company)}>
                           <CreditCard size={14} className="mr-2" /> Registrar abono
                         </DropdownMenuItem>
@@ -151,7 +157,7 @@ export default function CompanyTable({
                           <FileText size={14} className="mr-2" /> Estado de cuenta
                         </DropdownMenuItem>
                       )}
-                      {isAdmin && (
+                      {!readOnly && isAdmin && (
                         <>
                           <DropdownMenuSeparator />
                           {["ACTIVE", "INACTIVE", "BLOCKED"]
@@ -168,6 +174,7 @@ export default function CompanyTable({
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  )}
                 </TableCell>
               </TableRow>
             );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { useAuthStore } from "../../store/auth.store";
 import {
@@ -15,6 +15,8 @@ import {
   BarChart3,
   LogOut,
   ChevronLeft,
+  ChevronDown,
+  Settings,
   Menu,
   CreditCard,
   Hotel,
@@ -24,6 +26,8 @@ import {
   ShoppingCart,
   CalendarPlus,
   Eye,
+  UserPlus,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { switchHotelApi } from "../../api/auth.api";
@@ -44,52 +48,181 @@ const ROLE_COLORS = {
   WAITER: "from-rose-500 to-rose-600",
 };
 
-// Menú agrupado por intención: "Operar" (acciones/crear) vs "Consultar" (tablas)
-// vs "Sistema" (administración). Cada módulo tendrá su entrada de acción y/o su
-// entrada de consulta según se vaya migrando al patrón.
-const navGroups = [
+// Menú por módulo. Cada módulo con más de una intención (crear / gestionar /
+// ver) es un grupo desplegable; los que tienen una sola pantalla son enlaces
+// directos. El grupo del módulo en el que estás se abre solo.
+const ALL_STAFF   = ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"];
+const FRONT_DESK  = ["SUPERADMIN", "ADMIN", "RECEPTIONIST"];
+const ADMIN_ONLY  = ["SUPERADMIN", "ADMIN"];
+
+const navItems = [
+  { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ADMIN_ONLY },
+
   {
-    title: null, // sin encabezado — la portada
-    items: [
-      { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["SUPERADMIN", "ADMIN"] },
+    key: "facturas", icon: FileText, label: "Facturas",
+    children: [
+      { to: "/invoices/new", icon: ShoppingCart, label: "Crear factura", roles: ALL_STAFF },
+      { to: "/invoices",     icon: Eye,          label: "Ver facturas",  roles: ALL_STAFF },
     ],
   },
   {
-    title: "Operar",
-    items: [
-      { to: "/invoices/new", icon: ShoppingCart, label: "Crear factura", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
-      { to: "/reservations/nueva", icon: CalendarPlus, label: "Crear reservación", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
-      { to: "/reservations", icon: CalendarCheck, label: "Gestionar reservaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
-      { to: "/rooms", icon: BedDouble, label: "Habitaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
-      { to: "/room-charges", icon: CreditCard, label: "Room Charged", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
-      { to: "/shifts", icon: Clock, label: "Cierre de Turno", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
-      { to: "/cash-collections", icon: DollarSign, label: "Recolección", roles: ["SUPERADMIN", "ADMIN", "CASHIER"] },
+    key: "reservaciones", icon: CalendarCheck, label: "Reservaciones",
+    children: [
+      { to: "/reservations/nueva", icon: CalendarPlus,  label: "Crear reservación",      roles: FRONT_DESK },
+      { to: "/reservations",       icon: CalendarCheck, label: "Gestionar reservaciones", roles: FRONT_DESK },
+      { to: "/reservations/ver",   icon: Eye,           label: "Ver reservaciones",       roles: FRONT_DESK },
     ],
   },
   {
-    title: "Consultar",
-    items: [
-      { to: "/invoices", icon: FileText, label: "Ver facturas", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
-      { to: "/reservations/ver", icon: Eye, label: "Ver reservaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
-      { to: "/guests", icon: Users, label: "Huéspedes", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
-      { to: "/companies", icon: Building2, label: "Empresas", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
-      { to: "/inventory", icon: Package, label: "Inventario", roles: ["SUPERADMIN", "ADMIN"] },
-      { to: "/restaurant", icon: UtensilsCrossed, label: "Menú", roles: ["SUPERADMIN", "ADMIN"] },
-      { to: "/reports", icon: BarChart3, label: "Reportes SAR", roles: ["SUPERADMIN", "ADMIN"] },
+    key: "huespedes", icon: Users, label: "Huéspedes",
+    children: [
+      { to: "/guests/nuevo", icon: UserPlus, label: "Crear huésped",       roles: FRONT_DESK },
+      { to: "/guests",       icon: UserCog,  label: "Gestionar huéspedes", roles: FRONT_DESK },
+      { to: "/guests/ver",   icon: Eye,      label: "Ver huéspedes",       roles: FRONT_DESK },
     ],
   },
   {
-    title: "Sistema",
-    items: [
-      { to: "/users", icon: UserCog, label: "Usuarios", roles: ["SUPERADMIN", "ADMIN"] },
-      { to: "/hotels", icon: Hotel, label: "Hoteles", roles: ["SUPERADMIN"] },
+    key: "empresas", icon: Building2, label: "Empresas",
+    children: [
+      { to: "/companies/nueva", icon: Plus,      label: "Crear empresa",      roles: ADMIN_ONLY },
+      { to: "/companies",       icon: Building2, label: "Gestionar empresas", roles: ALL_STAFF },
+      { to: "/companies/ver",   icon: Eye,       label: "Ver empresas",       roles: ALL_STAFF },
+    ],
+  },
+
+  { to: "/rooms",        icon: BedDouble,  label: "Habitaciones", roles: FRONT_DESK },
+  { to: "/room-charges", icon: CreditCard, label: "Room Charged", roles: ALL_STAFF },
+
+  {
+    key: "caja", icon: DollarSign, label: "Caja",
+    children: [
+      { to: "/shifts",           icon: Clock,      label: "Cierre de turno", roles: FRONT_DESK },
+      { to: "/cash-collections", icon: DollarSign, label: "Recolección",     roles: ["SUPERADMIN", "ADMIN", "CASHIER"] },
+    ],
+  },
+
+  { to: "/inventory",  icon: Package,           label: "Inventario",   roles: ADMIN_ONLY },
+  { to: "/restaurant", icon: UtensilsCrossed,   label: "Menú",         roles: ADMIN_ONLY },
+  { to: "/reports",    icon: BarChart3,         label: "Reportes SAR", roles: ADMIN_ONLY },
+
+  {
+    key: "sistema", icon: Settings, label: "Sistema",
+    children: [
+      { to: "/users",  icon: UserCog, label: "Usuarios", roles: ADMIN_ONLY },
+      { to: "/hotels", icon: Hotel,   label: "Hoteles",  roles: ["SUPERADMIN"] },
     ],
   },
 ];
 
+// Deja solo lo que el rol puede ver, y descarta los grupos que quedan vacíos.
+function filterNavByRole(role) {
+  const result = [];
+  for (const item of navItems) {
+    if (item.children) {
+      const children = item.children.filter((c) => c.roles.includes(role));
+      if (children.length > 0) result.push({ ...item, children });
+    } else if (item.roles.includes(role)) {
+      result.push(item);
+    }
+  }
+  return result;
+}
+
+// Un enlace del menú. `nested` lo dibuja como hijo de un grupo desplegable.
+function NavItemLink({ item, collapsed, nested = false, onNavClick }) {
+  const { to, icon: Icon, label } = item;
+  return (
+    <NavLink
+      to={to}
+      end
+      onClick={onNavClick}
+      className={({ isActive }) =>
+        `flex items-center gap-3 rounded-xl font-medium
+         transition-all duration-150 group relative
+         ${nested ? "text-[0.78rem]" : "text-[0.82rem]"}
+         ${collapsed ? "px-0 py-2.5 justify-center" : nested ? "pl-9 pr-3 py-2" : "px-3 py-2.5"}
+         ${
+           isActive
+             ? "bg-linear-to-r from-amber-500/20 to-orange-500/10 text-amber-400"
+             : "text-white/40 hover:text-white/90 hover:bg-white/5"
+         }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && !collapsed && (
+            <span
+              className="absolute left-0 top-1/2 -translate-y-1/2
+                             w-0.5 h-5 bg-amber-400 rounded-r-full"
+            />
+          )}
+
+          <Icon size={nested ? 15 : 17} className="shrink-0" />
+
+          {!collapsed && <span className="truncate">{label}</span>}
+
+          {collapsed && (
+            <span
+              className="absolute left-full ml-3 px-2.5 py-1.5
+                             bg-[#1c1810] border border-amber-500/20 text-white
+                             text-xs rounded-lg whitespace-nowrap shadow-xl
+                             opacity-0 pointer-events-none group-hover:opacity-100
+                             transition-opacity z-50"
+            >
+              {label}
+            </span>
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+// Grupo desplegable de un módulo (Facturas, Reservaciones, ...).
+// Solo se usa con el sidebar expandido: colapsado no hay dónde desplegar, así
+// que ahí el menú se muestra plano (ver SidebarContent).
+function NavGroup({ group, isOpen, isActive, onToggle, onNavClick }) {
+  const Icon = group.icon;
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-[0.82rem] font-medium
+                    transition-all duration-150
+                    ${isActive ? "text-amber-400" : "text-white/40 hover:text-white/90 hover:bg-white/5"}`}
+      >
+        <Icon size={17} className="shrink-0" />
+        <span className="truncate flex-1 text-left">{group.label}</span>
+        <ChevronDown
+          size={14}
+          className={`shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="mt-0.5 space-y-0.5">
+          {group.children.map((child) => (
+            <NavItemLink
+              key={child.to}
+              item={child}
+              collapsed={false}
+              nested
+              onNavClick={onNavClick}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SidebarContent({
   collapsed,
   sections,
+  openGroups,
+  onToggleGroup,
+  activeGroupKey,
   user,
   initials,
   roleGradient,
@@ -125,61 +258,33 @@ function SidebarContent({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto scrollbar-none">
-        {sections.map((section, si) => (
-          <div key={section.title ?? si} className={si > 0 ? "pt-3" : ""}>
-            {section.title && !collapsed && (
-              <p className="px-3 mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-white/25">
-                {section.title}
-              </p>
+      <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto scrollbar-none">
+        {collapsed
+          // Colapsado: sin espacio para desplegar, se aplana todo a iconos.
+          ? sections
+              .flatMap((item) => item.children ?? [item])
+              .map((item) => (
+                <NavItemLink key={item.to} item={item} collapsed onNavClick={onNavClick} />
+              ))
+          : sections.map((item) =>
+              item.children ? (
+                <NavGroup
+                  key={item.key}
+                  group={item}
+                  isOpen={openGroups[item.key] ?? activeGroupKey === item.key}
+                  isActive={activeGroupKey === item.key}
+                  onToggle={() => onToggleGroup(item.key, activeGroupKey === item.key)}
+                  onNavClick={onNavClick}
+                />
+              ) : (
+                <NavItemLink
+                  key={item.to}
+                  item={item}
+                  collapsed={false}
+                  onNavClick={onNavClick}
+                />
+              )
             )}
-            {section.items.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end
-            onClick={onNavClick}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl text-[0.82rem] font-medium
-               transition-all duration-150 group relative
-               ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}
-               ${
-                 isActive
-                   ? "bg-linear-to-r from-amber-500/20 to-orange-500/10 text-amber-400"
-                   : "text-white/40 hover:text-white/90 hover:bg-white/5"
-               }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && !collapsed && (
-                  <span
-                    className="absolute left-0 top-1/2 -translate-y-1/2
-                                   w-0.5 h-5 bg-amber-400 rounded-r-full"
-                  />
-                )}
-
-                <Icon size={17} className="shrink-0" />
-
-                {!collapsed && <span className="truncate">{label}</span>}
-
-                {collapsed && (
-                  <span
-                    className="absolute left-full ml-3 px-2.5 py-1.5
-                                   bg-[#1c1810] border border-amber-500/20 text-white
-                                   text-xs rounded-lg whitespace-nowrap shadow-xl
-                                   opacity-0 pointer-events-none group-hover:opacity-100
-                                   transition-opacity z-50"
-                  >
-                    {label}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
-            ))}
-          </div>
-        ))}
       </nav>
 
       {/* Usuario + logout */}
@@ -241,12 +346,27 @@ function SidebarContent({
 export default function MainLayout() {
   const { user, logout, prepareHotelSwitch } = useAuthStore();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Solo guarda los grupos que el usuario abrió/cerró a mano. El resto sigue la
+  // regla por defecto: abierto si estás dentro de ese módulo.
+  const [openGroups, setOpenGroups] = useState({});
 
-  const sections = navGroups
-    .map((g) => ({ ...g, items: g.items.filter((item) => item.roles.includes(user?.role)) }))
-    .filter((g) => g.items.length > 0);
+  const sections = filterNavByRole(user?.role);
+
+  // Grupo al que pertenece la ruta actual.
+  const activeGroupKey = sections.find(
+    (item) => item.children?.some((c) => c.to === pathname)
+  )?.key ?? null;
+
+  const handleToggleGroup = (key, isActiveGroup) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [key]: !(prev[key] ?? isActiveGroup),
+    }));
+  };
+
   const initials = user?.username?.[0]?.toUpperCase() ?? "?";
   const roleGradient =
     ROLE_COLORS[user?.role] ?? "from-amber-500 to-orange-500";
@@ -269,6 +389,9 @@ export default function MainLayout() {
   const sidebarProps = {
     collapsed,
     sections,
+    openGroups,
+    onToggleGroup: handleToggleGroup,
+    activeGroupKey,
     user,
     initials,
     roleGradient,
