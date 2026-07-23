@@ -26,7 +26,6 @@ export const RoomsCard = ({ rooms }) => (
       {[
         { label: 'Disponibles',  value: rooms.available,   bg: 'bg-green-50',  text: 'text-green-700',  num: 'text-green-800' },
         { label: 'Ocupadas',     value: rooms.occupied,    bg: 'bg-blue-50',   text: 'text-blue-600',   num: 'text-blue-800' },
-        { label: 'Limpieza',     value: rooms.cleaning,    bg: 'bg-yellow-50', text: 'text-yellow-600', num: 'text-yellow-800' },
         { label: 'Mantenimiento',value: rooms.maintenance, bg: 'bg-red-50',    text: 'text-red-600',    num: 'text-red-800' },
       ].map(({ label, value, bg, text, num }) => (
         <div key={label} className={`rounded-lg p-3 ${bg}`}>

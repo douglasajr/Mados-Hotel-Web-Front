@@ -55,7 +55,7 @@ const navGroups = [
   {
     title: "Operar",
     items: [
-      { to: "/invoices/new", icon: ShoppingCart, label: "Nueva venta", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
+      { to: "/invoices/new", icon: ShoppingCart, label: "Crear factura", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
       { to: "/reservations", icon: CalendarCheck, label: "Reservaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
       { to: "/rooms", icon: BedDouble, label: "Habitaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
       { to: "/room-charges", icon: CreditCard, label: "Room Charged", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
@@ -66,7 +66,7 @@ const navGroups = [
   {
     title: "Consultar",
     items: [
-      { to: "/invoices", icon: FileText, label: "Facturas", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
+      { to: "/invoices", icon: FileText, label: "Ver facturas", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
       { to: "/guests", icon: Users, label: "Huéspedes", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
       { to: "/companies", icon: Building2, label: "Empresas", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
       { to: "/inventory", icon: Package, label: "Inventario", roles: ["SUPERADMIN", "ADMIN"] },

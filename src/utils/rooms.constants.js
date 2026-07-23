@@ -3,7 +3,10 @@ export const ROOM_TYPES = [
   'QUINTUPLE', 'SEXTUPLE', 'QUEEN', 'KINGSIZE'
 ]
 
-export const ROOM_STATUSES = ['AVAILABLE', 'OCCUPIED', 'CLEANING', 'MAINTENANCE']
+// "CLEANING" se eliminó del flujo: el check-out pasa la habitación directo a
+// AVAILABLE. Ya no es un estado seleccionable. (El label sigue en STATUS_CONFIG
+// solo como resguardo por si algún registro viejo lo tuviera.)
+export const ROOM_STATUSES = ['AVAILABLE', 'OCCUPIED', 'MAINTENANCE']
 
 export const STATUS_CONFIG = {
   AVAILABLE:   { label: 'Disponible',    class: 'bg-green-100 text-green-700 hover:bg-green-100' },
