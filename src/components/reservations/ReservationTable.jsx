@@ -48,6 +48,7 @@ export default function ReservationTable({
   onPageChange,
   onViewCharges,
   onEditDates,
+  readOnly = false,
 }) {
   if (reservations.length === 0) {
     return (
@@ -97,7 +98,8 @@ export default function ReservationTable({
               {/* Estado */}
               <Badge className={`text-xs shrink-0 ${sc.class}`}>{sc.label}</Badge>
 
-              {/* Acciones */}
+              {/* Acciones — solo en modo gestión (readOnly las oculta) */}
+              {!readOnly && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-gray-400 hover:text-gray-700">
@@ -143,6 +145,7 @@ export default function ReservationTable({
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+              )}
             </div>
           );
         })}

@@ -22,6 +22,8 @@ import {
   Clock,
   DollarSign,
   ShoppingCart,
+  CalendarPlus,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { switchHotelApi } from "../../api/auth.api";
@@ -56,7 +58,8 @@ const navGroups = [
     title: "Operar",
     items: [
       { to: "/invoices/new", icon: ShoppingCart, label: "Crear factura", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
-      { to: "/reservations", icon: CalendarCheck, label: "Reservaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
+      { to: "/reservations/nueva", icon: CalendarPlus, label: "Crear reservación", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
+      { to: "/reservations", icon: CalendarCheck, label: "Gestionar reservaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
       { to: "/rooms", icon: BedDouble, label: "Habitaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
       { to: "/room-charges", icon: CreditCard, label: "Room Charged", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
       { to: "/shifts", icon: Clock, label: "Cierre de Turno", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
@@ -67,6 +70,7 @@ const navGroups = [
     title: "Consultar",
     items: [
       { to: "/invoices", icon: FileText, label: "Ver facturas", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
+      { to: "/reservations/ver", icon: Eye, label: "Ver reservaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
       { to: "/guests", icon: Users, label: "Huéspedes", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
       { to: "/companies", icon: Building2, label: "Empresas", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
       { to: "/inventory", icon: Package, label: "Inventario", roles: ["SUPERADMIN", "ADMIN"] },

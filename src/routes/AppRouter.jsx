@@ -10,6 +10,8 @@ import RoomsPage from "../pages/rooms/RoomsPages";
 import GuestsPage from "../pages/guests/GuestPage";
 import CompaniesPage from "../pages/companies/CompaniesPages";
 import ReservationsPage from "../pages/reservation/ReservationPage";
+import ViewReservationsPage from "../pages/reservation/ViewReservationsPage";
+import CreateReservationPage from "../pages/reservation/CreateReservationPage";
 import InvoicesPage from "../pages/invoices/InvoicesPage";
 import NewInvoicePage from "../pages/invoices/NewInvoicePage";
 import InventoryPage from "../pages/inventory/InventoryPage";
@@ -77,7 +79,9 @@ export default function AppRouter() {
 
           {/* Rutas accesibles a todos los roles autenticados */}
           <Route path="rooms"        element={<RoomsPage />} />
-          <Route path="reservations" element={<ReservationsPage />} />
+          <Route path="reservations"       element={<ReservationsPage />} />
+          <Route path="reservations/ver"   element={<ViewReservationsPage />} />
+          <Route path="reservations/nueva" element={<CreateReservationPage />} />
           <Route path="guests"       element={<GuestsPage />} />
           <Route path="companies"    element={<CompaniesPage />} />
           <Route path="invoices"     element={<InvoicesPage />} />
