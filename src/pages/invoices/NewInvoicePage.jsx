@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { BedDouble, UtensilsCrossed, Package, Pencil, Search, Plus, ArrowLeft } from "lucide-react";
 import { useInvoiceForm } from "../../components/invoices/useInvoiceForm";
 import { useInvoices } from "../../hooks/useInvoices";
+import { useMyShift } from "../../hooks/useShifts";
+import { useAuthStore } from "../../store/auth.store";
 import InvoiceRoomTab from "../../components/invoices/InvoiceRoomTab";
 import InvoiceManualTab from "../../components/invoices/InvoiceManualTab";
 import InvoiceCartItems from "../../components/invoices/InvoiceCartItems";
@@ -26,6 +29,18 @@ export default function NewInvoicePage() {
   const form = useInvoiceForm();
   const { createInvoice, isCreating } = useInvoices({});
   const [showSplitModal, setShowSplitModal] = useState(false);
+
+  // Guard: el recepcionista debe tener un turno abierto para poder facturar.
+  // (Antes se validaba en el botón "Nueva factura"; ahora que se entra directo
+  // desde el menú "Nueva venta", el guard vive aquí.)
+  const user = useAuthStore((s) => s.user);
+  const { data: myShift, isLoading: shiftLoading } = useMyShift();
+  useEffect(() => {
+    if (user?.role === "RECEPTIONIST" && !shiftLoading && !myShift) {
+      toast.error("Debes abrir un turno antes de crear facturas");
+      navigate("/shifts");
+    }
+  }, [user, myShift, shiftLoading, navigate]);
 
   // Config fiscal del hotel (para el encabezado de la proforma). Solo lectura.
   const { data: fiscalConfig } = useQuery({

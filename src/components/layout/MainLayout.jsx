@@ -21,6 +21,7 @@ import {
   ArrowLeftRight,
   Clock,
   DollarSign,
+  ShoppingCart,
 } from "lucide-react";
 import { toast } from "sonner";
 import { switchHotelApi } from "../../api/auth.api";
@@ -41,96 +42,50 @@ const ROLE_COLORS = {
   WAITER: "from-rose-500 to-rose-600",
 };
 
-const navItems = [
+// Menú agrupado por intención: "Operar" (acciones/crear) vs "Consultar" (tablas)
+// vs "Sistema" (administración). Cada módulo tendrá su entrada de acción y/o su
+// entrada de consulta según se vaya migrando al patrón.
+const navGroups = [
   {
-    to: "/",
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    roles: ["SUPERADMIN", "ADMIN"],
+    title: null, // sin encabezado — la portada
+    items: [
+      { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["SUPERADMIN", "ADMIN"] },
+    ],
   },
   {
-    to: "/rooms",
-    icon: BedDouble,
-    label: "Habitaciones",
-    roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"],
+    title: "Operar",
+    items: [
+      { to: "/invoices/new", icon: ShoppingCart, label: "Nueva venta", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
+      { to: "/reservations", icon: CalendarCheck, label: "Reservaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
+      { to: "/rooms", icon: BedDouble, label: "Habitaciones", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
+      { to: "/room-charges", icon: CreditCard, label: "Room Charged", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
+      { to: "/shifts", icon: Clock, label: "Cierre de Turno", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
+      { to: "/cash-collections", icon: DollarSign, label: "Recolección", roles: ["SUPERADMIN", "ADMIN", "CASHIER"] },
+    ],
   },
   {
-    to: "/reservations",
-    icon: CalendarCheck,
-    label: "Reservaciones",
-    roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"],
+    title: "Consultar",
+    items: [
+      { to: "/invoices", icon: FileText, label: "Facturas", roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"] },
+      { to: "/guests", icon: Users, label: "Huéspedes", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"] },
+      { to: "/companies", icon: Building2, label: "Empresas", roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"] },
+      { to: "/inventory", icon: Package, label: "Inventario", roles: ["SUPERADMIN", "ADMIN"] },
+      { to: "/restaurant", icon: UtensilsCrossed, label: "Menú", roles: ["SUPERADMIN", "ADMIN"] },
+      { to: "/reports", icon: BarChart3, label: "Reportes SAR", roles: ["SUPERADMIN", "ADMIN"] },
+    ],
   },
   {
-    to: "/room-charges",
-    icon: CreditCard,
-    label: "Room Charged",
-    roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"],
-  },
-  {
-    to: "/guests",
-    icon: Users,
-    label: "Huéspedes",
-    roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"],
-  },
-  {
-    to: "/restaurant",
-    icon: UtensilsCrossed,
-    label: "Menú",
-    roles: ["SUPERADMIN", "ADMIN"],
-  },
-  {
-    to: "/inventory",
-    icon: Package,
-    label: "Inventario",
-    roles: ["SUPERADMIN", "ADMIN"],
-  },
-  {
-    to: "/companies",
-    icon: Building2,
-    label: "Empresas",
-    roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST", "CASHIER"],
-  },
-  {
-    to: "/invoices",
-    icon: FileText,
-    label: "Facturas",
-    roles: ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"],
-  },
-  {
-    to: "/shifts",
-    icon: Clock,
-    label: "Cierre de Turno",
-    roles: ["SUPERADMIN", "ADMIN", "RECEPTIONIST"],
-  },
-  {
-    to: "/cash-collections",
-    icon: DollarSign,
-    label: "Recolección",
-    roles: ["SUPERADMIN", "ADMIN", "CASHIER"],
-  },
-  {
-    to: "/users",
-    icon: UserCog,
-    label: "Usuarios",
-    roles: ["SUPERADMIN", "ADMIN"],
-  },
-  {
-    to: "/reports",
-    icon: BarChart3,
-    label: "Reportes SAR",
-    roles: ["SUPERADMIN", "ADMIN"],
-  },
-  {
-    to: "/hotels",
-    icon: Hotel,
-    label: "Hoteles",
-    roles: ["SUPERADMIN"],
+    title: "Sistema",
+    items: [
+      { to: "/users", icon: UserCog, label: "Usuarios", roles: ["SUPERADMIN", "ADMIN"] },
+      { to: "/hotels", icon: Hotel, label: "Hoteles", roles: ["SUPERADMIN"] },
+    ],
   },
 ];
 
 function SidebarContent({
   collapsed,
-  filtered,
+  sections,
   user,
   initials,
   roleGradient,
@@ -166,12 +121,19 @@ function SidebarContent({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto scrollbar-none">
-        {filtered.map(({ to, icon: Icon, label }) => (
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto scrollbar-none">
+        {sections.map((section, si) => (
+          <div key={section.title ?? si} className={si > 0 ? "pt-3" : ""}>
+            {section.title && !collapsed && (
+              <p className="px-3 mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-white/25">
+                {section.title}
+              </p>
+            )}
+            {section.items.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
-            end={to === "/"}
+            end
             onClick={onNavClick}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-xl text-[0.82rem] font-medium
@@ -211,6 +173,8 @@ function SidebarContent({
               </>
             )}
           </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 
@@ -276,7 +240,9 @@ export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const filtered = navItems.filter((item) => item.roles.includes(user?.role));
+  const sections = navGroups
+    .map((g) => ({ ...g, items: g.items.filter((item) => item.roles.includes(user?.role)) }))
+    .filter((g) => g.items.length > 0);
   const initials = user?.username?.[0]?.toUpperCase() ?? "?";
   const roleGradient =
     ROLE_COLORS[user?.role] ?? "from-amber-500 to-orange-500";
@@ -298,7 +264,7 @@ export default function MainLayout() {
 
   const sidebarProps = {
     collapsed,
-    filtered,
+    sections,
     user,
     initials,
     roleGradient,

@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Search, FileText, Receipt } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, FileText, Receipt } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,8 +10,6 @@ import {
 } from "@/components/ui/select";
 import { useInvoices, useCreditNotes } from "../../hooks/useInvoices";
 import { useAuthStore } from "../../store/auth.store";
-import { useMyShift } from "../../hooks/useShifts";
-import { toast } from "sonner";
 import InvoiceTable from "../../components/invoices/InvoiceTable";
 import VoidInvoiceModal from "../../components/invoices/VoidInvoiceModal";
 import InvoiceDetailModal from "../../components/invoices/InvoicesDetailModal";
@@ -27,7 +23,7 @@ const VOIDED_FILTERS = [
 ];
 
 // ── Pestaña: Facturas ────────────────────────────────────────────────────────
-function InvoicesTab({ onNavigateNew }) {
+function InvoicesTab() {
   const user = useAuthStore((s) => s.user);
   const isAdmin = ["SUPERADMIN", "ADMIN"].includes(user?.role);
   const [docType, setDocType] = useState("ALL");
@@ -63,18 +59,8 @@ function InvoicesTab({ onNavigateNew }) {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-gray-500 text-sm">{total} facturas encontradas</p>
-        <Button
-          onClick={onNavigateNew}
-          className="bg-linear-to-r from-amber-500 to-orange-500
-                     hover:from-amber-600 hover:to-orange-600 text-white border-0"
-        >
-          <Plus size={16} className="mr-2" />
-          Nueva factura
-        </Button>
-      </div>
+      {/* Header — solo consulta; para crear está "Nueva venta" en el menú */}
+      <p className="text-gray-500 text-sm">{total} facturas encontradas</p>
 
       {/* Filtros */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
@@ -275,18 +261,7 @@ function CreditNotesTab() {
 
 // ── Página principal ─────────────────────────────────────────────────────────
 export default function InvoicesPage() {
-  const navigate = useNavigate();
   const [tab, setTab] = useState("invoices");
-  const user = useAuthStore((s) => s.user);
-  const { data: myShift } = useMyShift();
-
-  const handleNavigateNew = () => {
-    if (user?.role === "RECEPTIONIST" && !myShift) {
-      toast.error("Debes abrir un turno antes de crear facturas");
-      return;
-    }
-    navigate("/invoices/new");
-  };
 
   const tabs = [
     { id: "invoices", label: "Facturas", icon: FileText },
@@ -321,7 +296,7 @@ export default function InvoicesPage() {
 
       {/* Contenido */}
       {tab === "invoices"
-        ? <InvoicesTab onNavigateNew={handleNavigateNew} />
+        ? <InvoicesTab />
         : <CreditNotesTab />
       }
     </div>
