@@ -4,7 +4,7 @@ import { X, Eye, EyeOff } from "lucide-react";
 import { getHotelsApi } from "../../api/hotels.api";
 import { useAuthStore } from "../../store/auth.store";
 
-const ROLES = ["ADMIN", "RECEPTIONIST", "CASHIER", "WAITER"];
+const ROLES = ["ADMIN", "RECEPTIONIST", "CASHIER", "WAITER", "WAREHOUSE"];
 
 const ROLE_LABELS = {
   SUPERADMIN: "Super Admin",
@@ -12,6 +12,7 @@ const ROLE_LABELS = {
   RECEPTIONIST: "Recepcionista",
   CASHIER: "Cajero",
   WAITER: "Mesero",
+  WAREHOUSE: "Bodeguero",
 };
 
 export function UserModal({ user, onClose, onSave }) {

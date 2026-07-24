@@ -26,6 +26,7 @@ const ROLE_LABELS = {
   RECEPTIONIST: "Recepcionista",
   CASHIER: "Cajero",
   WAITER: "Mesero",
+  WAREHOUSE: "Bodeguero",
 };
 
 const ROLE_COLORS = {
@@ -34,6 +35,7 @@ const ROLE_COLORS = {
   RECEPTIONIST: "bg-emerald-100 text-emerald-700",
   CASHIER: "bg-blue-100 text-blue-700",
   WAITER: "bg-orange-100 text-orange-700",
+  WAREHOUSE: "bg-teal-100 text-teal-700",
 };
 
 export default function UsersPage() {

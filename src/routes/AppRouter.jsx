@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
 import LoginPage from "../pages/auth/LoginPage";
 import SelectHotelPage from "../pages/auth/SelectHotelPage";
@@ -25,9 +31,12 @@ import RoomChargedPage from "../pages/room-charged/RoomChargedPage";
 import HotelsPage from "../pages/admin/HotelsPage";
 import ShiftsPage from "../pages/shifts/ShiftsPage";
 import CashCollectionsPage from "../pages/cash-collections/CashCollectionsPage";
+import WarehousePage from "../pages/warehouse/WarehousePage";
+import WarehouseIssuesPage from "../pages/warehouse/WarehouseIssuesPage";
 
-const ADMIN_ROLES  = ["SUPERADMIN", "ADMIN"];
-const STAFF_ROLES  = ["RECEPTIONIST", "CASHIER", "WAITER"];
+const ADMIN_ROLES = ["SUPERADMIN", "ADMIN"];
+const STAFF_ROLES = ["RECEPTIONIST", "CASHIER", "WAITER"];
+const WAREHOUSE_ROLES = ["SUPERADMIN", "ADMIN", "WAREHOUSE"];
 
 const PrivateRoute = ({ children }) => {
   const token = useAuthStore((s) => s.token);
@@ -36,11 +45,19 @@ const PrivateRoute = ({ children }) => {
 
 const TempTokenRoute = ({ children }) => {
   const tempToken = useAuthStore((s) => s.tempToken);
-  const token     = useAuthStore((s) => s.token);
+  const token = useAuthStore((s) => s.token);
   // tempToken tiene prioridad: permite cambiar hotel incluso si el token principal aún existe
   if (tempToken) return children;
-  if (token)     return <Navigate to="/" />;
+  if (token) return <Navigate to="/" />;
   return <Navigate to="/login" />;
+};
+
+// El bodeguero solo trabaja en bodega. El backend ya bloquea sus llamadas, pero
+// sin esto podría abrir cualquier pantalla escribiendo la URL y verla vacía.
+const NotWarehouseRoute = () => {
+  const user = useAuthStore((s) => s.user);
+  if (user?.role === "WAREHOUSE") return <Navigate to="/warehouse" />;
+  return <Outlet />;
 };
 
 const RoleRoute = ({ children, roles, fallback = "/" }) => {
@@ -52,8 +69,10 @@ const RoleRoute = ({ children, roles, fallback = "/" }) => {
 // Ruta index: admin → Dashboard, staff → WelcomePage
 const IndexRoute = () => {
   const user = useAuthStore((s) => s.user);
-  if (ADMIN_ROLES.includes(user?.role))  return <DashboardPage />;
-  if (STAFF_ROLES.includes(user?.role))  return <WelcomePage />;
+  // El bodeguero solo trabaja en bodega: al entrar va directo ahí.
+  if (user?.role === "WAREHOUSE") return <Navigate to="/warehouse" />;
+  if (ADMIN_ROLES.includes(user?.role)) return <DashboardPage />;
+  if (STAFF_ROLES.includes(user?.role)) return <WelcomePage />;
   return <Navigate to="/rooms" />;
 };
 
@@ -81,22 +100,45 @@ export default function AppRouter() {
         >
           <Route index element={<IndexRoute />} />
 
-          {/* Rutas accesibles a todos los roles autenticados */}
-          <Route path="rooms"        element={<RoomsPage />} />
-          <Route path="reservations"       element={<ReservationsPage />} />
-          <Route path="reservations/ver"   element={<ViewReservationsPage />} />
-          <Route path="reservations/nueva" element={<CreateReservationPage />} />
-          <Route path="guests"          element={<GuestsPage />} />
-          <Route path="guests/ver"      element={<ViewGuestsPage />} />
-          <Route path="guests/nuevo"    element={<CreateGuestPage />} />
-          <Route path="companies"       element={<CompaniesPage />} />
-          <Route path="companies/ver"   element={<ViewCompaniesPage />} />
-          <Route path="companies/nueva" element={<CreateCompanyPage />} />
-          <Route path="invoices"     element={<InvoicesPage />} />
-          <Route path="invoices/new" element={<NewInvoicePage />} />
-          <Route path="room-charges" element={<RoomChargedPage />} />
-          <Route path="shifts" element={<ShiftsPage />} />
-          <Route path="cash-collections" element={<CashCollectionsPage />} />
+          {/* Rutas del personal del hotel — cerradas al bodeguero */}
+          <Route element={<NotWarehouseRoute />}>
+            <Route path="rooms" element={<RoomsPage />} />
+            <Route path="reservations" element={<ReservationsPage />} />
+            <Route path="reservations/ver" element={<ViewReservationsPage />} />
+            <Route
+              path="reservations/nueva"
+              element={<CreateReservationPage />}
+            />
+            <Route path="guests" element={<GuestsPage />} />
+            <Route path="guests/ver" element={<ViewGuestsPage />} />
+            <Route path="guests/nuevo" element={<CreateGuestPage />} />
+            <Route path="companies" element={<CompaniesPage />} />
+            <Route path="companies/ver" element={<ViewCompaniesPage />} />
+            <Route path="companies/nueva" element={<CreateCompanyPage />} />
+            <Route path="invoices" element={<InvoicesPage />} />
+            <Route path="invoices/new" element={<NewInvoicePage />} />
+            <Route path="room-charges" element={<RoomChargedPage />} />
+            <Route path="shifts" element={<ShiftsPage />} />
+            <Route path="cash-collections" element={<CashCollectionsPage />} />
+          </Route>
+
+          {/* Bodega — solo bodeguero y administración */}
+          <Route
+            path="warehouse"
+            element={
+              <RoleRoute roles={WAREHOUSE_ROLES} fallback="/">
+                <WarehousePage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="warehouse/salidas"
+            element={
+              <RoleRoute roles={WAREHOUSE_ROLES} fallback="/">
+                <WarehouseIssuesPage />
+              </RoleRoute>
+            }
+          />
 
           {/* Rutas restringidas a ADMIN / SUPERADMIN */}
           <Route

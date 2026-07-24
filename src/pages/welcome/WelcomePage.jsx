@@ -7,6 +7,7 @@ const ROLE_LABELS = {
   RECEPTIONIST: "Recepcionista",
   CASHIER:      "Cajero",
   WAITER:       "Mesero",
+  WAREHOUSE:    "Bodeguero",
 };
 
 function getGreeting() {

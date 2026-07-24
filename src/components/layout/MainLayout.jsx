@@ -28,6 +28,7 @@ import {
   Eye,
   UserPlus,
   Plus,
+  PackageCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { switchHotelApi } from "../../api/auth.api";
@@ -38,6 +39,7 @@ const ROLE_LABELS = {
   RECEPTIONIST: "Recepcionista",
   CASHIER: "Cajero",
   WAITER: "Mesero",
+  WAREHOUSE: "Bodeguero",
 };
 
 const ROLE_COLORS = {
@@ -46,6 +48,7 @@ const ROLE_COLORS = {
   RECEPTIONIST: "from-emerald-500 to-emerald-600",
   CASHIER: "from-blue-500 to-blue-600",
   WAITER: "from-rose-500 to-rose-600",
+  WAREHOUSE: "from-teal-500 to-teal-600",
 };
 
 // Menú por módulo. Cada módulo con más de una intención (crear / gestionar /
@@ -54,6 +57,7 @@ const ROLE_COLORS = {
 const ALL_STAFF   = ["SUPERADMIN", "ADMIN", "CASHIER", "RECEPTIONIST"];
 const FRONT_DESK  = ["SUPERADMIN", "ADMIN", "RECEPTIONIST"];
 const ADMIN_ONLY  = ["SUPERADMIN", "ADMIN"];
+const WAREHOUSE_STAFF = ["SUPERADMIN", "ADMIN", "WAREHOUSE"];
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ADMIN_ONLY },
@@ -97,6 +101,14 @@ const navItems = [
     children: [
       { to: "/shifts",           icon: Clock,      label: "Cierre de turno", roles: FRONT_DESK },
       { to: "/cash-collections", icon: DollarSign, label: "Recolección",     roles: ["SUPERADMIN", "ADMIN", "CASHIER"] },
+    ],
+  },
+
+  {
+    key: "bodega", icon: PackageCheck, label: "Bodega",
+    children: [
+      { to: "/warehouse",         icon: PackageCheck, label: "Sacar suministros", roles: WAREHOUSE_STAFF },
+      { to: "/warehouse/salidas", icon: Eye,          label: "Ver salidas",       roles: WAREHOUSE_STAFF },
     ],
   },
 
