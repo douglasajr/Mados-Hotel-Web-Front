@@ -1,12 +1,11 @@
 import GuestsListView from "../../components/guests/GuestsListView";
 
-// "Ver huéspedes": solo consulta, sin acciones de edición.
+// "Ver huéspedes": buscar y editar en la misma pantalla.
 export default function ViewGuestsPage() {
   return (
     <GuestsListView
-      readOnly
       title="Huéspedes"
-      subtitle="Consulta de huéspedes registrados."
+      subtitle="Busca un huésped y edítalo con el lápiz de su fila."
     />
   );
 }

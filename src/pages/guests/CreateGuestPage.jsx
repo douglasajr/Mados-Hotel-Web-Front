@@ -28,7 +28,7 @@ export default function CreateGuestPage() {
           to="/guests"
           className="text-sm text-gray-500 hover:text-amber-600 flex items-center gap-1 transition-colors"
         >
-          Gestionar huéspedes <ArrowRight size={14} />
+          Ver huéspedes <ArrowRight size={14} />
         </Link>
       </div>
 

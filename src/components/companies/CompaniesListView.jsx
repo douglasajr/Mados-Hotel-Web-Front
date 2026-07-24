@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useCompanies } from "../../hooks/useCompanies";
-import { Search, Building2, AlertCircle, Pencil } from "lucide-react";
+import { Search, Building2, AlertCircle } from "lucide-react";
 import CompanyModal from "./CompanyModal";
 import CompanyTable from "./CompanyTable";
 import CreditModal from "./CreditModal";
@@ -9,11 +8,9 @@ import CreditReportModal from "./CreditReportModal";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useAuthStore } from "../../store/auth.store";
 
-// Lista de empresas. Se usa en dos modos:
-//   - Gestionar (readOnly=false): editar, abonos, cambio de estado.
-//   - Ver (readOnly=true): solo consulta (el estado de cuenta sigue disponible
-//     porque también es de lectura).
-export default function CompaniesListView({ readOnly = false, title, subtitle }) {
+// Lista de empresas: se busca y se trabaja en la misma pantalla (editar,
+// abonos, estado de cuenta). Cada acción sigue limitada por el rol.
+export default function CompaniesListView({ title, subtitle }) {
   const user = useAuthStore((s) => s.user);
   const isAdmin = ["SUPERADMIN", "ADMIN"].includes(user?.role);
   const canRegisterPayment = ["SUPERADMIN", "ADMIN", "CASHIER"].includes(user?.role);
@@ -66,28 +63,12 @@ export default function CompaniesListView({ readOnly = false, title, subtitle })
 
   return (
     <div className="p-6 space-y-5">
-      {/* Header — en modo consulta lleva los accesos a crear y gestionar,
-          que ya no están en el menú lateral. */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {subtitle ?? `${total} empresa${total !== 1 ? "s" : ""} registrada${total !== 1 ? "s" : ""}`}
-          </p>
-        </div>
-
-        {/* Crear ya está en el menú; gestionar no, así que se entra por aquí. */}
-        {readOnly && (
-          <Link
-            to="/companies"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
-                       border border-gray-200 text-gray-600 bg-white
-                       hover:border-amber-300 hover:text-amber-600 transition-all"
-          >
-            <Pencil size={14} />
-            Gestionar empresas
-          </Link>
-        )}
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+        <p className="text-gray-500 text-sm mt-1">
+          {subtitle ?? `${total} empresa${total !== 1 ? "s" : ""} registrada${total !== 1 ? "s" : ""}`}
+        </p>
       </div>
 
       {/* Buscador + filtro morosas */}
@@ -147,7 +128,6 @@ export default function CompaniesListView({ readOnly = false, title, subtitle })
           totalPages={totalPages}
           isAdmin={isAdmin}
           canRegisterPayment={canRegisterPayment}
-          readOnly={readOnly}
           onEdit={setModal}
           onCredit={setCreditModal}
           onReport={setReportModal}
@@ -156,8 +136,8 @@ export default function CompaniesListView({ readOnly = false, title, subtitle })
         />
       )}
 
-      {/* Modales de acción — solo en modo gestión */}
-      {!readOnly && modal && (
+      {/* Modales de acción */}
+      {modal && (
         <CompanyModal
           company={modal}
           onClose={() => setModal(null)}
@@ -165,7 +145,7 @@ export default function CompaniesListView({ readOnly = false, title, subtitle })
           isSaving={isUpdating}
         />
       )}
-      {!readOnly && creditModal && (
+      {creditModal && (
         <CreditModal
           company={creditModal}
           onClose={() => setCreditModal(null)}
@@ -173,7 +153,7 @@ export default function CompaniesListView({ readOnly = false, title, subtitle })
         />
       )}
 
-      {/* Estado de cuenta: lectura, disponible en ambos modos */}
+      {/* Estado de cuenta */}
       {reportModal && (
         <CreditReportModal
           company={reportModal}

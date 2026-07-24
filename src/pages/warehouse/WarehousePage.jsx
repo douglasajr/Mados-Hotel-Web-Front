@@ -1,23 +1,24 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search, Package, Plus, Minus, Trash2, PackageCheck, AlertTriangle, FileText } from "lucide-react";
-import { useWarehouseStock, useCreateWarehouseIssue } from "../../hooks/useWarehouse";
+import { useWarehouseStock, useCreateWarehouseIssue, useDestinationHotels } from "../../hooks/useWarehouse";
 import { useAuthStore } from "../../store/auth.store";
-import { WAREHOUSE_AREAS, formatQty } from "../../utils/warehouse.constants";
+import { formatQty, hotelColor } from "../../utils/warehouse.constants";
 import { buildIssueHtml } from "../../components/warehouse/warehousePrint.template";
 import { toast } from "sonner";
 
 // "Sacar suministros": mismo patrón que el carrito de facturas.
-// Izquierda = catálogo de bodega (lo que hay). Derecha = carrito + área destino.
+// Izquierda = catálogo de bodega (lo que hay). Derecha = carrito + hotel destino.
 export default function WarehousePage() {
   const user = useAuthStore((s) => s.user);
   const { stock, isLoading } = useWarehouseStock();
+  const { hotels } = useDestinationHotels();
   const { createIssue, isCreating } = useCreateWarehouseIssue();
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
   const [cart, setCart] = useState([]);
-  const [area, setArea] = useState(null);
+  const [destinationHotelId, setDestinationHotelId] = useState(null);
   const [notes, setNotes] = useState("");
 
   const categories = useMemo(() => {
@@ -72,16 +73,16 @@ export default function WarehousePage() {
   const totalUnits = cart.reduce((sum, line) => sum + Number(line.quantity), 0);
 
   const handleConfirm = async () => {
-    if (!area) return toast.error("Elige el área a la que van los suministros");
+    if (!destinationHotelId) return toast.error("Elige el hotel al que van los suministros");
     if (cart.length === 0) return toast.error("Agrega al menos un suministro");
 
     const issue = await createIssue({
-      area,
+      destinationHotelId,
       notes: notes.trim() || undefined,
       items: cart.map((line) => ({ productId: line.productId, quantity: line.quantity })),
     });
 
-    // Comprobante para firmar: quién entregó, qué y para qué área.
+    // Comprobante para firmar: quién entregó, qué y a qué hotel.
     const w = window.open("", "_blank", "width=850,height=900");
     if (w) {
       w.document.write(buildIssueHtml(issue, user?.hotelName ?? "Hotel Mados"));
@@ -89,7 +90,7 @@ export default function WarehousePage() {
     }
 
     setCart([]);
-    setArea(null);
+    setDestinationHotelId(null);
     setNotes("");
   };
 
@@ -101,7 +102,7 @@ export default function WarehousePage() {
           <Package size={20} className="text-amber-600" />
           <div>
             <h1 className="text-lg font-bold text-gray-900 leading-tight">Sacar suministros</h1>
-            <p className="text-xs text-gray-500">Arma el pedido y elige a qué área va</p>
+            <p className="text-xs text-gray-500">Arma el pedido y elige a qué hotel va</p>
           </div>
         </div>
         <Link
@@ -256,25 +257,29 @@ export default function WarehousePage() {
               )}
             </div>
 
-            {/* Área destino — obligatoria */}
+            {/* Hotel destino — obligatorio. Solo queda registrado a dónde fue:
+                no se traspasa ni se suma stock al hotel que recibe. */}
             <div>
               <p className="text-sm font-semibold text-gray-900 mb-2">
-                ¿A dónde va? <span className="text-red-500">*</span>
+                ¿A qué hotel va? <span className="text-red-500">*</span>
               </p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {WAREHOUSE_AREAS.map((a) => (
+              <div className="grid gap-1.5">
+                {hotels.map((hotel, index) => (
                   <button
-                    key={a.value}
+                    key={hotel.id}
                     type="button"
-                    onClick={() => setArea(a.value)}
-                    className={`px-3 py-2.5 rounded-lg text-sm font-medium border transition-all
-                      ${area === a.value
+                    onClick={() => setDestinationHotelId(hotel.id)}
+                    className={`px-3 py-2.5 rounded-lg text-sm font-medium border text-left transition-all
+                      ${destinationHotelId === hotel.id
                         ? "bg-amber-500 border-amber-500 text-white shadow-sm"
-                        : `${a.color} hover:opacity-80`}`}
+                        : `${hotelColor(index)} hover:opacity-80`}`}
                   >
-                    {a.label}
+                    {hotel.name}
                   </button>
                 ))}
+                {hotels.length === 0 && (
+                  <p className="text-sm text-gray-400 py-2">No hay hoteles disponibles</p>
+                )}
               </div>
             </div>
 
@@ -303,7 +308,7 @@ export default function WarehousePage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => { setCart([]); setArea(null); setNotes(""); }}
+                onClick={() => { setCart([]); setDestinationHotelId(null); setNotes(""); }}
                 disabled={cart.length === 0}
                 className="px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200
                            text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-all"
@@ -313,7 +318,7 @@ export default function WarehousePage() {
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={isCreating || cart.length === 0 || !area}
+                disabled={isCreating || cart.length === 0 || !destinationHotelId}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
                            text-sm font-semibold text-white transition-all shadow-sm
                            bg-linear-to-r from-amber-500 to-orange-500

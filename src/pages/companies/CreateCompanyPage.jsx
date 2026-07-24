@@ -28,7 +28,7 @@ export default function CreateCompanyPage() {
           to="/companies"
           className="text-sm text-gray-500 hover:text-amber-600 flex items-center gap-1 transition-colors"
         >
-          Gestionar empresas <ArrowRight size={14} />
+          Ver empresas <ArrowRight size={14} />
         </Link>
       </div>
 

@@ -1,17 +1,3 @@
-// Áreas del hotel a las que se entregan suministros. El `value` debe coincidir
-// exactamente con el enum WarehouseArea de Prisma.
-export const WAREHOUSE_AREAS = [
-  { value: "COCINA",        label: "Cocina",        color: "bg-orange-100 text-orange-700 border-orange-200" },
-  { value: "RESTAURANTE",   label: "Restaurante",   color: "bg-rose-100 text-rose-700 border-rose-200" },
-  { value: "LIMPIEZA",      label: "Limpieza",      color: "bg-sky-100 text-sky-700 border-sky-200" },
-  { value: "RECEPCION",     label: "Recepción",     color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  { value: "MANTENIMIENTO", label: "Mantenimiento", color: "bg-violet-100 text-violet-700 border-violet-200" },
-];
-
-export const AREA_LABELS = Object.fromEntries(
-  WAREHOUSE_AREAS.map((area) => [area.value, area.label])
-);
-
 export const formatQty = (n) => {
   const value = Number(n);
   // Sin decimales cuando es entero: "3" se lee mejor que "3.00".
@@ -38,3 +24,15 @@ export const formatDayString = (day) => {
   const [year, month, dayOfMonth] = String(day).split("-");
   return `${dayOfMonth}/${month}/${year}`;
 };
+
+// Colores rotativos para las etiquetas de hotel destino. Los hoteles vienen de
+// la base de datos, así que el color se asigna por posición en la lista.
+const HOTEL_COLORS = [
+  "bg-sky-100 text-sky-700 border-sky-200",
+  "bg-emerald-100 text-emerald-700 border-emerald-200",
+  "bg-violet-100 text-violet-700 border-violet-200",
+  "bg-orange-100 text-orange-700 border-orange-200",
+  "bg-rose-100 text-rose-700 border-rose-200",
+];
+
+export const hotelColor = (index) => HOTEL_COLORS[index % HOTEL_COLORS.length];

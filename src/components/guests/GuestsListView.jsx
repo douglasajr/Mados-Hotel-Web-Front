@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useGuests } from "../../hooks/useGuest";
 import { Input } from "@/components/ui/input";
-import { Search, Users, Pencil } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import GuestModal from "./GuestModal";
 import GuestTable from "./GuestTable";
 import { useDebounce } from "../../hooks/useDebounce";
 
-// Lista de huéspedes. Se usa en dos modos:
-//   - Gestionar (readOnly=false): permite editar cada huésped.
-//   - Ver (readOnly=true): solo consulta, sin acciones.
-export default function GuestsListView({ readOnly = false, title, subtitle }) {
+// Lista de huéspedes: se busca y se edita en la misma pantalla (el lápiz de
+// cada fila abre el formulario). Para registrar uno nuevo está "Crear huésped".
+export default function GuestsListView({ title, subtitle }) {
   const [modal, setModal] = useState(null);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
@@ -43,28 +41,12 @@ export default function GuestsListView({ readOnly = false, title, subtitle }) {
 
   return (
     <div className="p-6 space-y-5">
-      {/* Header — en modo consulta lleva los accesos a crear y gestionar,
-          que ya no están en el menú lateral. */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {subtitle ?? `${total} huésped${total !== 1 ? "es" : ""} registrado${total !== 1 ? "s" : ""}`}
-          </p>
-        </div>
-
-        {/* Crear ya está en el menú; gestionar no, así que se entra por aquí. */}
-        {readOnly && (
-          <Link
-            to="/guests"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
-                       border border-gray-200 text-gray-600 bg-white
-                       hover:border-amber-300 hover:text-amber-600 transition-all"
-          >
-            <Pencil size={14} />
-            Gestionar huéspedes
-          </Link>
-        )}
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+        <p className="text-gray-500 text-sm mt-1">
+          {subtitle ?? `${total} huésped${total !== 1 ? "es" : ""} registrado${total !== 1 ? "s" : ""}`}
+        </p>
       </div>
 
       {/* Buscador */}
@@ -101,14 +83,13 @@ export default function GuestsListView({ readOnly = false, title, subtitle }) {
           total={total}
           page={page}
           totalPages={totalPages}
-          readOnly={readOnly}
           onEdit={setModal}
           onPageChange={setPage}
         />
       )}
 
-      {/* Editar — solo en modo gestión */}
-      {!readOnly && modal && (
+      {/* Editar */}
+      {modal && (
         <GuestModal
           guest={modal}
           onClose={() => setModal(null)}

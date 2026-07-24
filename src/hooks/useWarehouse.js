@@ -4,7 +4,20 @@ import {
   getWarehouseIssuesApi,
   createWarehouseIssueApi
 } from '../api/warehouse.api'
+import { getHotelsApi } from '../api/hotels.api'
 import { toast } from 'sonner'
+
+// Los hoteles son los destinos posibles de una salida. Es SOLO registro: no se
+// traspasa ni se suma stock al hotel que recibe.
+export function useDestinationHotels() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['hotels-destinations'],
+    queryFn: getHotelsApi
+  })
+
+  const hotels = (data ?? []).filter((hotel) => hotel.active)
+  return { hotels, isLoading }
+}
 
 export function useWarehouseStock() {
   const { data, isLoading } = useQuery({

@@ -87,7 +87,7 @@ const navItems = [
   {
     key: "empresas", icon: Building2, label: "Empresas",
     children: [
-      { to: "/companies/nueva", icon: Plus, label: "Crear empresa", roles: ADMIN_ONLY },
+      { to: "/companies/nueva", icon: Plus, label: "Crear empresa", roles: FRONT_DESK },
       { to: "/companies/ver",   icon: Eye,  label: "Ver empresas",  roles: ALL_STAFF },
     ],
   },

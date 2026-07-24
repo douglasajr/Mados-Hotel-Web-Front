@@ -13,10 +13,8 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import WelcomePage from "../pages/welcome/WelcomePage";
 import UsersPage from "../pages/users/UsersPages";
 import RoomsPage from "../pages/rooms/RoomsPages";
-import GuestsPage from "../pages/guests/GuestPage";
 import ViewGuestsPage from "../pages/guests/ViewGuestsPage";
 import CreateGuestPage from "../pages/guests/CreateGuestPage";
-import CompaniesPage from "../pages/companies/CompaniesPages";
 import ViewCompaniesPage from "../pages/companies/ViewCompaniesPage";
 import CreateCompanyPage from "../pages/companies/CreateCompanyPage";
 import ReservationsPage from "../pages/reservation/ReservationPage";
@@ -109,10 +107,12 @@ export default function AppRouter() {
               path="reservations/nueva"
               element={<CreateReservationPage />}
             />
-            <Route path="guests" element={<GuestsPage />} />
+            {/* /guests y /companies apuntan a la misma pantalla que "ver":
+                editar ya se hace ahí mismo, y los enlaces viejos siguen sirviendo. */}
+            <Route path="guests" element={<ViewGuestsPage />} />
             <Route path="guests/ver" element={<ViewGuestsPage />} />
             <Route path="guests/nuevo" element={<CreateGuestPage />} />
-            <Route path="companies" element={<CompaniesPage />} />
+            <Route path="companies" element={<ViewCompaniesPage />} />
             <Route path="companies/ver" element={<ViewCompaniesPage />} />
             <Route path="companies/nueva" element={<CreateCompanyPage />} />
             <Route path="invoices" element={<InvoicesPage />} />

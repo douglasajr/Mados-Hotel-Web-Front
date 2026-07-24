@@ -1,12 +1,11 @@
 import CompaniesListView from "../../components/companies/CompaniesListView";
 
-// "Ver empresas": solo consulta (incluye estado de cuenta, que es de lectura).
+// "Ver empresas": buscar, editar, abonos y estado de cuenta en la misma pantalla.
 export default function ViewCompaniesPage() {
   return (
     <CompaniesListView
-      readOnly
       title="Empresas"
-      subtitle="Consulta de empresas y su estado de crédito."
+      subtitle="Busca una empresa y trabájala desde el menú de su fila."
     />
   );
 }

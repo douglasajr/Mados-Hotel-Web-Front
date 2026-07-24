@@ -1,4 +1,4 @@
-import { AREA_LABELS, formatQty, formatDateTime, formatDateTimeShort, formatDayString } from "../../utils/warehouse.constants";
+import { formatQty, formatDateTime, formatDateTimeShort, formatDayString } from "../../utils/warehouse.constants";
 
 const AMBER = "#d97706";
 const AMBER2 = "#92400e";
@@ -79,7 +79,7 @@ export function buildIssueHtml(issue, hotelName = "Hotel Mados") {
 
   const body = `
 <div class="meta">
-  <div class="meta-box"><div class="meta-lbl">Área destino</div><div class="meta-val">${AREA_LABELS[issue.area] ?? issue.area}</div></div>
+  <div class="meta-box"><div class="meta-lbl">Hotel destino</div><div class="meta-val">${issue.destinationHotel?.name ?? "—"}</div></div>
   <div class="meta-box"><div class="meta-lbl">Entregado por</div><div class="meta-val">${issue.user?.name ?? "—"}</div></div>
   <div class="meta-box"><div class="meta-lbl">Fecha y hora</div><div class="meta-val">${formatDateTime(issue.createdAt)}</div></div>
 </div>
@@ -91,7 +91,7 @@ ${issue.notes ? `<div class="meta-box" style="margin-bottom:8px"><div class="met
 <div class="total-box"><div class="total-row"><span>TOTAL DE UNIDADES</span><span>${formatQty(totalUnits)}</span></div></div>
 <div class="sign">
   <div class="sign-col"><div class="sign-line"></div><div class="sign-lbl">Entrega (bodega)</div></div>
-  <div class="sign-col"><div class="sign-line"></div><div class="sign-lbl">Recibe (${AREA_LABELS[issue.area] ?? issue.area})</div></div>
+  <div class="sign-col"><div class="sign-line"></div><div class="sign-lbl">Recibe (${issue.destinationHotel?.name ?? "destino"})</div></div>
 </div>`;
 
   return shell(`Salida de bodega`, hotelName, "SALIDA DE BODEGA", body);
@@ -99,24 +99,26 @@ ${issue.notes ? `<div class="meta-box" style="margin-bottom:8px"><div class="met
 
 // ── Reporte de VARIAS salidas, agrupado por área ───────────────────────────
 export function buildIssuesReportHtml(issues, { hotelName = "Hotel Mados", from, to } = {}) {
-  // Se agrupa por área para que el reporte responda "qué se sacó y para dónde".
-  const byArea = {};
+  // Se agrupa por hotel destino para que el reporte responda
+  // "qué se sacó y para dónde".
+  const byHotel = {};
   for (const issue of issues) {
-    if (!byArea[issue.area]) byArea[issue.area] = [];
-    byArea[issue.area].push(issue);
+    const name = issue.destinationHotel?.name ?? "Sin destino";
+    if (!byHotel[name]) byHotel[name] = [];
+    byHotel[name].push(issue);
   }
 
   let totalUnits = 0;
   let sections = "";
 
-  for (const area of Object.keys(byArea).sort()) {
-    const areaIssues = byArea[area];
-    let areaUnits = 0;
+  for (const hotel of Object.keys(byHotel).sort()) {
+    const hotelIssues = byHotel[hotel];
+    let hotelUnits = 0;
     let rows = "";
 
-    for (const issue of areaIssues) {
+    for (const issue of hotelIssues) {
       for (const item of issue.items) {
-        areaUnits += Number(item.quantity);
+        hotelUnits += Number(item.quantity);
         rows += `<tr>
           <td>${formatDateTimeShort(issue.createdAt)}</td>
           <td>${item.product?.name ?? "—"}</td>
@@ -126,8 +128,8 @@ export function buildIssuesReportHtml(issues, { hotelName = "Hotel Mados", from,
       }
     }
 
-    totalUnits += areaUnits;
-    sections += `<tr class="group-head"><td colspan="4">${AREA_LABELS[area] ?? area} — ${formatQty(areaUnits)} unidades</td></tr>${rows}`;
+    totalUnits += hotelUnits;
+    sections += `<tr class="group-head"><td colspan="4">${hotel} — ${formatQty(hotelUnits)} unidades</td></tr>${rows}`;
   }
 
   const period = from || to

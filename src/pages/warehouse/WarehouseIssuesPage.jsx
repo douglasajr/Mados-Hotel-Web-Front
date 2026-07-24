@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, Printer, Package, ArrowLeft } from "lucide-react";
-import { useWarehouseIssues } from "../../hooks/useWarehouse";
+import { useWarehouseIssues, useDestinationHotels } from "../../hooks/useWarehouse";
 import { useAuthStore } from "../../store/auth.store";
-import { WAREHOUSE_AREAS, AREA_LABELS, formatQty, formatDateTime } from "../../utils/warehouse.constants";
+import { formatQty, formatDateTime, hotelColor } from "../../utils/warehouse.constants";
 import {
   buildIssuesReportHtml,
   buildIssueHtml,
@@ -18,13 +18,15 @@ export default function WarehouseIssuesPage() {
 
   const [from, setFrom] = useState(todayStr());
   const [to, setTo] = useState(todayStr());
-  const [area, setArea] = useState("ALL");
+  const [destinationHotelId, setDestinationHotelId] = useState("ALL");
+
+  const { hotels } = useDestinationHotels();
 
   // El backend filtra por rango exacto; se manda el día completo.
   const filters = {
     from: `${from}T00:00:00`,
     to: `${to}T23:59:59`,
-    ...(area !== "ALL" && { area }),
+    ...(destinationHotelId !== "ALL" && { destinationHotelId }),
   };
 
   const { issues, isLoading } = useWarehouseIssues(filters);
@@ -51,7 +53,7 @@ export default function WarehouseIssuesPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Salidas de bodega</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Qué se sacó, cuándo y para qué área
+            Qué se sacó, cuándo y a qué hotel fue
           </p>
         </div>
 
@@ -104,17 +106,17 @@ export default function WarehouseIssuesPage() {
         </div>
 
         <div className="flex gap-1.5 flex-wrap">
-          {["ALL", ...WAREHOUSE_AREAS.map((a) => a.value)].map((value) => (
+          {[{ id: "ALL", name: "Todos los hoteles" }, ...hotels].map((hotel) => (
             <button
-              key={value}
+              key={hotel.id}
               type="button"
-              onClick={() => setArea(value)}
+              onClick={() => setDestinationHotelId(hotel.id)}
               className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all
-                ${area === value
+                ${destinationHotelId === hotel.id
                   ? "bg-amber-500 border-amber-500 text-white"
                   : "bg-white border-gray-200 text-gray-600 hover:border-amber-300"}`}
             >
-              {value === "ALL" ? "Todas las áreas" : AREA_LABELS[value]}
+              {hotel.name}
             </button>
           ))}
         </div>
@@ -138,13 +140,13 @@ export default function WarehouseIssuesPage() {
         <div className="space-y-2">
           {issues.map((issue) => {
             const units = issue.items.reduce((s, item) => s + Number(item.quantity), 0);
-            const areaConfig = WAREHOUSE_AREAS.find((a) => a.value === issue.area);
+            const hotelIndex = hotels.findIndex((h) => h.id === issue.destinationHotel?.id);
 
             return (
               <div key={issue.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                 <div className="flex flex-wrap items-center gap-2 mb-2.5">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${areaConfig?.color ?? "bg-gray-100 text-gray-700 border-gray-200"}`}>
-                    {AREA_LABELS[issue.area] ?? issue.area}
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${hotelIndex >= 0 ? hotelColor(hotelIndex) : "bg-gray-100 text-gray-700 border-gray-200"}`}>
+                    {issue.destinationHotel?.name ?? "Sin destino"}
                   </span>
                   <span className="text-xs text-gray-500">{formatDateTime(issue.createdAt)}</span>
                   <span className="text-xs text-gray-400">· {issue.user?.name ?? "—"}</span>
